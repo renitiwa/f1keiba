@@ -539,7 +539,7 @@
       </div>
     </div>
 
-    <!-- FLYING LAP SPOTLIGHT GRAPHIC (FP & QUALIFYING - Visible to Both Admin & Viewers) -->
+    <!-- FLYING LAP SPOTLIGHT GRAPHIC (FP & QUALIFYING) -->
     <div id="flying-lap-box" title="クリックでこの計測中選手のカメラへ切替 (主催者のみ)">
       <div class="fl-header">
         <span>⏱ LIVE FLYING LAP</span>
@@ -588,7 +588,7 @@
     <!-- ADMIN RIGHT TELEMETRY MONITOR -->
     <div id="admin-right-telemetry-monitor" class="interactive">
       <div style="font-weight:900; color:var(--f1-red); border-bottom:1px solid #2a2a3a; padding-bottom:4px;">
-        LIVE TELEMETRY & ATTACK STATUS
+        LIVE TELEMETRY & AI OVERTAKE STATUS
       </div>
       <div id="admin-live-stats-list" style="display:flex; flex-direction:column; gap:5px;"></div>
     </div>
@@ -941,7 +941,7 @@ function saveProfile() {
    5. GAME STATE & CONFIGURATION (Host Authoritative Roster Sync)
 ============================================================================ */
 let gameState = {
-  rosterId: '', // Unique signature of the 12 selected drivers so Viewers always match Host 100%
+  rosterId: '',
   sessionId: 'ses_' + Date.now(),
   phase: 'FREE_PRACTICE',
   timer: 0,
@@ -1532,7 +1532,7 @@ const safetyCarGroup = new THREE.Group();
 })();
 
 /* ============================================================================
-   9. RANDOMIZED DRIVER STATS, INITIALIZATION & SIMULATION
+   9. RANDOMIZED DRIVER STATS, SMART OVERTAKE/AVOIDANCE AI & CRASH IMMUNITY
 ============================================================================ */
 let carMeshes = {};
 
@@ -1582,6 +1582,7 @@ function initDriversList(selectedDriversData) {
       tyreLife: d.tyreLife !== undefined ? d.tyreLife : 100,
       ers: d.ers !== undefined ? d.ers : 100,
       momActive: Boolean(d.momActive),
+      overtakeState: d.overtakeState || 'NORMAL', // NORMAL, ATTACK, BACK_OFF, AVOID_WRECK
       isFlyingLap: isFlying,
       yieldingToFastCar: Boolean(d.yieldingToFastCar),
       inPit: Boolean(d.inPit),
@@ -1665,7 +1666,6 @@ function setWeatherCondition(cond) {
   });
 }
 
-// Smooth Client-Side Extrapolation between 50ms Host State Syncs
 function extrapolateViewerCars(dt) {
   if (!gameState.drivers.length || gameState.phase === 'PODIUM' || gameState.phase === 'BETTING' || gameState.phase === 'FIVE_LIGHTS') {
     return;
@@ -1679,6 +1679,44 @@ function extrapolateViewerCars(dt) {
   if (gameState.raceControl === 'SC') {
     gameState.scTrackT = (gameState.scTrackT + ((155 / 3.6) * dt) / TRACK_LENGTH_METERS) % 1;
   }
+}
+
+// Helper: Find an open lateral lane on the 24m-wide track that avoids all nearby traffic
+const CANDIDATE_LANES = [-8.8, -6.2, -3.6, -1.2, 1.2, 3.6, 6.2, 8.8];
+
+function evaluateOvertakeAndAvoidance(drv, idealLine, upcomingCurvature) {
+  let closestCarAhead = null;
+  let minAheadDistM = 9999;
+  const obstaclesInWindow = [];
+  let crashedCarAhead = null;
+
+  gameState.drivers.forEach(other => {
+    if (other.code === drv.code || other.inPit) return;
+
+    // Signed longitudinal distance in meters (-20m behind to +180m ahead)
+    let deltaT = (other.t - drv.t + 1) % 1;
+    if (deltaT > 0.5) deltaT -= 1.0;
+    const longDistM = deltaT * TRACK_LENGTH_METERS;
+
+    if (other.crashed) {
+      // Detect stopped/crashed car ahead so we steer around it cleanly (no collision possible anyway)
+      if (longDistM > -8 && longDistM < 130 && Math.abs(other.laneOffset - drv.laneOffset) < 4.0) {
+        crashedCarAhead = other;
+      }
+      return;
+    }
+
+    // Track active cars in proximity window (-10m alongside/behind to +150m ahead)
+    if (longDistM > -10 && longDistM < 150) {
+      obstaclesInWindow.push({ car: other, longDistM });
+      if (longDistM > 0 && longDistM < minAheadDistM) {
+        minAheadDistM = longDistM;
+        closestCarAhead = other;
+      }
+    }
+  });
+
+  return { closestCarAhead, minAheadDistM, obstaclesInWindow, crashedCarAhead };
 }
 
 function updateSimulation(dt) {
@@ -1712,15 +1750,18 @@ function updateSimulation(dt) {
   const sp = gameState.flyingSpotlight;
 
   gameState.drivers.forEach((drv, i) => {
+    // 1. Crashed cars stay stationary off-line and never affect other cars
     if (drv.crashed) {
       drv.speed = 0;
       drv.momActive = false;
+      drv.overtakeState = 'CRASHED';
       return;
     }
 
     if (gameState.phase === 'FIVE_LIGHTS' || gameState.phase === 'BETTING') {
       drv.speed = 0;
       drv.momActive = false;
+      drv.overtakeState = 'GRID';
       return;
     }
 
@@ -1743,6 +1784,7 @@ function updateSimulation(dt) {
 
     if (drv.inPit) {
       drv.momActive = false;
+      drv.overtakeState = 'PIT';
       if (drv.pitStage === 1) {
         drv.speed = 80;
         const dT = ((drv.speed / 3.6) * dt) / TRACK_LENGTH_METERS;
@@ -1793,13 +1835,18 @@ function updateSimulation(dt) {
 
     let baseTargetSpeed = getTargetSpeedAt(drv.t);
     const sampleIdx = Math.floor(((drv.t % 1 + 1) % 1) * TRACK_SAMPLES);
+    const upcomingCurv = Math.max(trackCurvature[sampleIdx], trackCurvature[(sampleIdx + 12) % TRACK_SAMPLES]);
     const idealLine = idealRacingLine[sampleIdx];
 
     drv.yieldingToFastCar = false;
+    drv.overtakeState = 'NORMAL';
+
+    // 2. Non-Timed Lap (FP/Quali Out-lap) or Finished Cooldown Lap: Pull over to edge & yield
     if ((isPracticeOrQuali && !drv.isFlyingLap) || drv.finished) {
       baseTargetSpeed = Math.min(baseTargetSpeed * 0.62, 165);
       const safeEdge = idealLine > 0 ? -9.5 : 9.5;
       drv.targetLane = safeEdge;
+      drv.overtakeState = 'YIELD';
 
       gameState.drivers.forEach(other => {
         if (other.code === drv.code || !other.isFlyingLap || other.inPit || other.crashed) return;
@@ -1811,6 +1858,7 @@ function updateSimulation(dt) {
         }
       });
     } else {
+      // Standard Out-In-Out Racing Line
       drv.targetLane = Math.max(-9.5, Math.min(9.5, idealLine + drv.linePreference * 0.45));
     }
 
@@ -1824,56 +1872,116 @@ function updateSimulation(dt) {
     }
     const wearPenalty = 1.0 - ((100 - drv.tyreLife) * 0.001);
 
-    let carAhead = null;
-    let minGapT = 1.0;
-    gameState.drivers.forEach(other => {
-      if (other.code === drv.code || other.inPit || other.crashed) return;
-      const diffT = (other.t - drv.t + 1) % 1;
-      if (diffT > 0 && diffT < minGapT) {
-        minGapT = diffT;
-        carAhead = other;
-      }
-    });
+    // 3. SMART OVERTAKING, TRAFFIC AVOIDANCE & "ABORT WHEN IMPOSSIBLE" LOGIC
+    const { closestCarAhead, minAheadDistM, obstaclesInWindow, crashedCarAhead } =
+      evaluateOvertakeAndAvoidance(drv, idealLine, upcomingCurv);
 
     drv.momActive = false;
-    if (carAhead && minGapT < 0.036 && (!isPracticeOrQuali || drv.isFlyingLap) && !drv.finished) {
-      baseTargetSpeed += 14;
-      if (Math.abs(carAhead.laneOffset - drv.laneOffset) < 3.4) {
-        const roomLeft = 9.6 - carAhead.laneOffset;
-        const roomRight = carAhead.laneOffset - (-9.6);
-        if (roomLeft > roomRight) {
-          drv.targetLane = Math.min(9.5, carAhead.laneOffset + 4.8);
-        } else {
-          drv.targetLane = Math.max(-9.5, carAhead.laneOffset - 4.8);
+    let speedCapFromTraffic = null;
+
+    if (crashedCarAhead) {
+      // Steer cleanly around any crashed car ahead (even though collision with it is disabled)
+      drv.overtakeState = 'AVOID_WRECK';
+      drv.targetLane = crashedCarAhead.laneOffset > 0 ? -7.5 : 7.5;
+    } else if (closestCarAhead && minAheadDistM < 145 && (!isPracticeOrQuali || drv.isFlyingLap) && !drv.finished && gameState.raceControl === 'GREEN') {
+      // We are in the slipstream/attack zone behind a car ahead!
+      // Evaluate all candidate lanes across the track width to see if a clean, safe passing corridor exists
+      let bestLane = null;
+      let bestLaneScore = -999;
+
+      CANDIDATE_LANES.forEach(candLane => {
+        // Check if any car in our forward/side window blocks this candidate lane
+        let laneBlocked = false;
+        let minLatClearance = 99;
+
+        obstaclesInWindow.forEach(obs => {
+          if (obs.longDistM > -7 && obs.longDistM < 68) {
+            const latDiff = Math.abs(obs.car.laneOffset - candLane);
+            if (latDiff < 2.85) {
+              laneBlocked = true;
+            }
+            if (latDiff < minLatClearance) minLatClearance = latDiff;
+          }
+        });
+
+        if (!laneBlocked) {
+          // Score favors lanes that are close to our current lane (smooth steer) and not too far from ideal line
+          const steerCost = Math.abs(candLane - drv.laneOffset) * 0.35;
+          const idealCost = Math.abs(candLane - idealLine) * 0.18;
+          const score = minLatClearance - steerCost - idealCost;
+          if (score > bestLaneScore) {
+            bestLaneScore = score;
+            bestLane = candLane;
+          }
+        }
+      });
+
+      // Check if overtaking right now is too risky / impossible ("無理そうならいったん諦める"):
+      // 1) No unblocked lane exists (2-wide or 3-wide roadblock ahead), OR
+      // 2) Entering a sharp corner (upcomingCurv > 0.052) while still behind (minAheadDistM > 14m) without enough speed delta
+      const isSharpCornerEntry = (upcomingCurv > 0.052 && minAheadDistM > 12 && minAheadDistM < 48);
+      const hasEnoughOverspeed = (drv.speed > closestCarAhead.speed - 4 || drv.ers > 22);
+
+      if (bestLane !== null && !isSharpCornerEntry && hasEnoughOverspeed) {
+        // SAFE TO ATTACK! Steer into the open passing lane to avoid other cars and overtake
+        drv.overtakeState = 'ATTACK';
+        drv.targetLane = bestLane;
+        baseTargetSpeed += 14; // Slipstream tow
+
+        if (gameState.phase === 'RACE' && drv.ers > 15 && baseTargetSpeed > 210) {
+          drv.momActive = true;
+          drv.ers = Math.max(0, drv.ers - dt * 15);
+          baseTargetSpeed += 22;
+        }
+      } else {
+        // IMPOSSIBLE / TOO RISKY -> ABORT OVERTAKE ("いったん諦める": Lift & Coast behind car ahead)
+        drv.overtakeState = 'BACK_OFF';
+        drv.momActive = false; // Save ERS battery for next straight
+        // Tuck neatly behind the car ahead (or stay in a safe non-colliding lane) and match its speed
+        drv.targetLane = closestCarAhead.laneOffset * 0.7 + idealLine * 0.3;
+        if (minAheadDistM < 32) {
+          // Smoothly match the leader's speed so we never ram into the back of them
+          speedCapFromTraffic = Math.max(120, closestCarAhead.speed * (minAheadDistM < 14 ? 0.96 : 0.99));
         }
       }
-
-      if (gameState.phase === 'RACE' && gameState.raceControl === 'GREEN' && drv.ers > 15 && baseTargetSpeed > 210) {
-        drv.momActive = true;
-        drv.ers = Math.max(0, drv.ers - dt * 15);
-        baseTargetSpeed += 22;
-      }
-    } else if (!drv.momActive) {
+    } else {
+      // Harvest ERS when not using Overtake Mode
       if (baseTargetSpeed < 220) drv.ers = Math.min(100, drv.ers + dt * 15);
     }
 
+    // 4. Side-by-Side Lateral Avoidance (Leave racing room when alongside another active car)
+    obstaclesInWindow.forEach(obs => {
+      if (Math.abs(obs.longDistM) < 8.5) {
+        const latDiff = drv.laneOffset - obs.car.laneOffset;
+        if (Math.abs(latDiff) < 2.7) {
+          const pushDir = latDiff >= 0 ? 1 : -1;
+          drv.targetLane = Math.max(-9.6, Math.min(9.6, drv.targetLane + pushDir * 2.2));
+        }
+      }
+    });
+
+    // Safety Car / VSC Speed Cap
     if (gameState.raceControl === 'VSC') {
       baseTargetSpeed = Math.min(baseTargetSpeed, 160);
     } else if (gameState.raceControl === 'SC') {
       baseTargetSpeed = Math.min(baseTargetSpeed, 150);
       drv.targetLane = 0;
-      if (carAhead && minGapT < 0.012) {
-        baseTargetSpeed = Math.min(baseTargetSpeed, carAhead.speed * 0.95);
+      if (closestCarAhead && minAheadDistM < 28) {
+        speedCapFromTraffic = Math.min(speedCapFromTraffic || 999, closestCarAhead.speed * 0.95);
       }
     }
 
-    drv.laneOffset += (drv.targetLane - drv.laneOffset) * Math.min(1, dt * 4.5);
+    drv.laneOffset += (drv.targetLane - drv.laneOffset) * Math.min(1, dt * 4.8);
 
     const dynamicWave = 0.986 + Math.sin(now * 0.0012 + i * 1.7) * 0.024;
     const effectiveSkill = drv.skill * (gameState.phase === 'RACE' ? drv.racePaceFactor : 1.0);
-    const desiredSpeed = baseTargetSpeed * effectiveSkill * tyreGrip * wearPenalty * dynamicWave;
+    let desiredSpeed = baseTargetSpeed * effectiveSkill * tyreGrip * wearPenalty * dynamicWave;
 
-    const accelRate = desiredSpeed > drv.speed ? 110 : 210;
+    if (speedCapFromTraffic !== null) {
+      desiredSpeed = Math.min(desiredSpeed, speedCapFromTraffic);
+    }
+
+    const accelRate = desiredSpeed > drv.speed ? 110 : 225;
     if (drv.speed < desiredSpeed) {
       drv.speed = Math.min(desiredSpeed, drv.speed + accelRate * dt);
     } else {
@@ -1939,30 +2047,40 @@ function updateSimulation(dt) {
     }
   });
 
+  // 5. CAR-TO-CAR COLLISION DETECTION (Crashed cars are 100% immune/ghosted!)
   if (gameState.raceControl === 'GREEN' && (gameState.phase === 'RACE' || isPracticeOrQuali)) {
+    // Filter strictly to active, non-crashed, non-pitting, non-finished cars
     const activeCars = gameState.drivers.filter(d => !d.inPit && !d.crashed && !d.finished && d.speed > 100);
     for (let a = 0; a < activeCars.length; a++) {
       for (let b = a + 1; b < activeCars.length; b++) {
         const c1 = activeCars[a];
         const c2 = activeCars[b];
+        // Double safety check: if either car is already crashed, never collide
+        if (c1.crashed || c2.crashed) continue;
         if (isPracticeOrQuali && (!c1.isFlyingLap || !c2.isFlyingLap)) continue;
+        // If either car has already backed off ("いったん諦める"), they yield cleanly without crashing
+        if (c1.overtakeState === 'BACK_OFF' || c2.overtakeState === 'BACK_OFF') continue;
 
         let diffT = Math.abs(c1.t - c2.t);
         if (diffT > 0.5) diffT = 1 - diffT;
         const distMeters = diffT * TRACK_LENGTH_METERS;
         const latMeters = Math.abs(c1.laneOffset - c2.laneOffset);
 
-        if (distMeters < 3.4 && latMeters < 1.3) {
-          const push = c1.laneOffset > c2.laneOffset ? 1.1 : -1.1;
-          c1.laneOffset += push;
-          c2.laneOffset -= push;
+        if (distMeters < 3.1 && latMeters < 1.2) {
+          // Wheel-to-wheel rub: push apart
+          const push = c1.laneOffset >= c2.laneOffset ? 1.15 : -1.15;
+          c1.laneOffset = Math.max(-9.8, Math.min(9.8, c1.laneOffset + push));
+          c2.laneOffset = Math.max(-9.8, Math.min(9.8, c2.laneOffset - push));
 
           const idx = Math.floor(c1.t * TRACK_SAMPLES);
-          if (trackCurvature[idx] > 0.048 && Math.random() < 0.015) {
+          // Rare crash only when both cars are aggressively attacking in a sharp corner
+          if (trackCurvature[idx] > 0.052 && Math.random() < 0.008) {
             const victim = Math.random() < 0.5 ? c1 : c2;
             victim.crashed = true;
             victim.speed = 0;
-            victim.laneOffset = victim.laneOffset > 0 ? 9.8 : -9.8;
+            // Park the crashed car on the verge/runoff so it's out of the main groove
+            victim.laneOffset = victim.laneOffset >= 0 ? 10.6 : -10.6;
+            victim.targetLane = victim.laneOffset;
             forceTimingTowerRefresh();
             if (gameState.phase === 'RACE') {
               checkAllDriversFinished();
@@ -2087,6 +2205,7 @@ function focusBroadcastOnFlyingLapDriver() {
     gameState.broadcast.targetCode = sp.code;
     highlightAdminDriverButtons();
     forceTimingTowerRefresh();
+    broadcastStateSnapshot();
   }
 }
 
@@ -2543,6 +2662,10 @@ function updateUI() {
       momEl.textContent = '⚡ MOM: ON';
       momEl.style.background = 'var(--f1-purple)';
       momEl.style.color = '#fff';
+    } else if (hudDrv.overtakeState === 'BACK_OFF') {
+      momEl.textContent = 'LIFT & WAIT';
+      momEl.style.background = '#332b11';
+      momEl.style.color = 'var(--f1-yellow)';
     } else {
       momEl.textContent = 'MOM: OFF';
       momEl.style.background = '#222';
@@ -2591,11 +2714,31 @@ function updateUI() {
   if (isAdmin) {
     const adminList = document.getElementById('admin-live-stats-list');
     adminList.innerHTML = gameState.drivers.map(d => {
-      const stateTag = d.crashed ? 'CRASH' : (d.finished ? 'FIN 🏁' : (isPQ ? (d.isFlyingLap ? 'ATTACK' : 'SLOW(端)') : `${Math.round(d.speed)}km/h`));
+      let stateTag = `${Math.round(d.speed)}km/h`;
+      let stateColor = '#aaa';
+      if (d.crashed) {
+        stateTag = 'CRASH (GHOST)';
+        stateColor = '#ff5555';
+      } else if (d.finished) {
+        stateTag = 'FIN 🏁';
+        stateColor = '#00d64f';
+      } else if (isPQ) {
+        stateTag = d.isFlyingLap ? 'ATTACK' : 'SLOW(端)';
+        stateColor = d.isFlyingLap ? '#d896ff' : '#7799bb';
+      } else if (d.overtakeState === 'ATTACK') {
+        stateTag = '⚡ OVERTAKE';
+        stateColor = '#d896ff';
+      } else if (d.overtakeState === 'BACK_OFF') {
+        stateTag = '⏳ 見送り(待機)';
+        stateColor = '#ffd000';
+      } else if (d.overtakeState === 'AVOID_WRECK') {
+        stateTag = '⚠️ 事故車回避';
+        stateColor = '#00e1ff';
+      }
       return `
         <div style="display:flex; justify-content:space-between; border-bottom:1px solid #222; padding:2px 0;">
           <span><strong>P${d.pos} ${d.code}</strong> (${d.tyre} ${Math.round(d.tyreLife)}%)</span>
-          <span style="font-family:monospace; color:${d.isFlyingLap ? '#d896ff' : '#aaa'};">${stateTag}</span>
+          <span style="font-family:monospace; color:${stateColor};">${stateTag}</span>
         </div>
       `;
     }).join('');
@@ -2915,7 +3058,6 @@ function initNetworking() {
   if (isAdmin) {
     createHostGame();
   } else if (isValidViewer) {
-    // Request state over BroadcastChannel immediately (for same-browser tabs)
     localChannel.postMessage({ type: 'VIEWER_JOIN', playerId: playerProfile.id });
     connectToHostPeer(roomParam);
   }
@@ -2939,7 +3081,6 @@ function createHostGame() {
     peerConnections.push(conn);
     document.getElementById('admin-peer-count-label').textContent = `接続参加者: ${peerConnections.length}人`;
     conn.on('open', () => {
-      // Immediately send full roster and state as soon as a viewer connects!
       conn.send(buildStateSyncPacket());
     });
     conn.on('data', (data) => handleNetworkPacket(data));
@@ -3001,7 +3142,6 @@ function handleNetworkPacket(pkt) {
   if (!pkt || !pkt.type) return;
 
   if (pkt.type === 'VIEWER_JOIN' && isAdmin) {
-    // A participant just joined or requested sync -> broadcast full state immediately
     broadcastStateSnapshot();
     return;
   }
@@ -3013,12 +3153,10 @@ function handleNetworkPacket(pkt) {
     const prevPhase = gameState.phase;
     const incomingRosterId = pkt.state.rosterId || computeRosterSignature(incomingDrivers);
 
-    // CRITICAL FIX: If Viewer has no drivers OR Viewer's 12 drivers don't match Host's 12 drivers, rebuild 3D cars from Host's exact list!
     if (gameState.drivers.length !== incomingDrivers.length || gameState.rosterId !== incomingRosterId) {
       initDriversList(incomingDrivers);
       gameState.rosterId = incomingRosterId;
     } else {
-      // Update each driver's properties and tyre visuals while preserving the exact Host standings order
       const updatedList = [];
       incomingDrivers.forEach(sd => {
         const localD = gameState.drivers.find(d => d.code === sd.code);
@@ -3090,7 +3228,6 @@ function handleNetworkPacket(pkt) {
   }
 }
 
-// Host 20Hz State Sync Interval
 setInterval(() => {
   if (isAdmin && gameState.drivers.length > 0) {
     broadcastStateSnapshot();
@@ -3293,7 +3430,6 @@ document.getElementById('btn-close-result').addEventListener('click', () => {
 /* ============================================================================
    16. BOOTSTRAP & MAIN LOOP (Host Authoritative Initialization)
 ============================================================================ */
-// Only Admin initializes random drivers; Viewer waits for Host's exact 12-driver roster via STATE_SYNC!
 initNetworking();
 
 let lastFrameTime = performance.now();
