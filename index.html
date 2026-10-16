@@ -25,7 +25,7 @@
     }
 
     /* =========================================================
-       INVITE ONLY GATE SCREEN (No /admin and No ?room=...)
+       INVITE ONLY GATE SCREEN
     ========================================================= */
     #invite-gate-screen {
       position: fixed; inset: 0; z-index: 9999;
@@ -51,12 +51,11 @@
       position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
     }
     body.admin-mode #canvas-container {
-      /* In Admin Studio mode, 3D viewport sits in the top-center monitor */
       position: fixed;
       top: 42px;
-      left: 250px;
+      left: 240px;
       right: 260px;
-      bottom: 230px;
+      bottom: 235px;
       width: auto;
       height: auto;
       border: 2px solid #2a2a3a;
@@ -68,7 +67,7 @@
     .interactive { pointer-events: auto; }
 
     /* =========================================================
-       VIEWER COLLAPSIBLE TOP BAR (LIVE / WALLET MENU)
+       VIEWER COLLAPSIBLE TOP BAR (LIVE / WALLET / SOUND)
     ========================================================= */
     #viewer-top-bar {
       position: absolute; top: 12px; left: 14px; z-index: 25;
@@ -91,40 +90,39 @@
 
     #viewer-top-dropdown {
       background: var(--f1-panel); border: 1px solid var(--f1-border);
-      border-radius: 8px; padding: 12px 16px; min-width: 260px;
+      border-radius: 8px; padding: 12px 16px; min-width: 265px;
       display: none; flex-direction: column; gap: 8px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.75); font-size: 13px;
     }
     #viewer-top-dropdown.open { display: flex; }
 
     /* =========================================================
-       RACE CONTROL BANNER (SAFETY CAR / VSC)
+       RACE CONTROL BANNER (SAFETY CAR / VSC / PODIUM)
     ========================================================= */
     #race-control-banner {
       position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
       z-index: 35; background: var(--f1-yellow); color: #000;
-      font-weight: 900; font-size: 16px; letter-spacing: 1.5px;
-      padding: 8px 26px; border-radius: 6px; border: 2px solid #000;
+      font-weight: 900; font-size: 15px; letter-spacing: 1.5px;
+      padding: 7px 24px; border-radius: 6px; border: 2px solid #000;
       box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none;
     }
     body.admin-mode #race-control-banner { top: 52px; }
 
     /* =========================================================
-       SLIM LIVE TIMING TOWER (LEFT SIDE - 5s UPDATE)
+       SLIM LIVE TIMING TOWER (LEFT SIDE)
     ========================================================= */
     #timing-tower {
-      position: absolute; top: 58px; left: 14px; width: 202px;
+      position: absolute; top: 58px; left: 14px; width: 205px;
       background: rgba(14, 14, 20, 0.92); border-top: 3px solid var(--f1-red);
       border-radius: 0 0 6px 6px; box-shadow: 0 8px 25px rgba(0,0,0,0.65);
       overflow: hidden; transition: opacity 0.25s, transform 0.25s; z-index: 20;
     }
     body.admin-mode #timing-tower {
-      /* In Admin mode, timing tower is docked as the Left Studio Monitor */
-      position: fixed; top: 42px; left: 0; width: 250px; bottom: 230px;
+      position: fixed; top: 42px; left: 0; width: 240px; bottom: 235px;
       border-radius: 0; border-top: none; border-right: 1px solid #2a2a3a;
       opacity: 1 !important; transform: none !important;
     }
-    #timing-tower.hidden-tower { opacity: 0; transform: translateX(-230px); pointer-events: none; }
+    #timing-tower.hidden-tower { opacity: 0; transform: translateX(-235px); pointer-events: none; }
 
     .tower-header {
       background: #1d1d2b; padding: 6px 10px; font-size: 11px; font-weight: 900;
@@ -137,10 +135,10 @@
     }
     .tower-row:hover { background: rgba(255,255,255,0.1); }
     .tower-row.focused { background: rgba(225, 6, 0, 0.28); }
-    .tower-row.crashed-row { opacity: 0.48; }
+    .tower-row.crashed-row { opacity: 0.45; }
     .pos-num { width: 20px; font-weight: 800; text-align: center; font-size: 11px; color: #ccc; }
     .team-stripe { width: 3px; height: 15px; margin: 0 6px; border-radius: 2px; }
-    .drv-code { font-weight: 800; width: 48px; font-size: 12px; display: flex; align-items: center; gap: 3px; }
+    .drv-code { font-weight: 800; width: 54px; font-size: 12px; display: flex; align-items: center; gap: 3px; }
     .mom-dot {
       width: 6px; height: 6px; border-radius: 50%; background: var(--f1-purple);
       display: none; box-shadow: 0 0 6px var(--f1-purple);
@@ -148,7 +146,7 @@
     .mom-dot.active { display: inline-block; }
     .drv-gap { flex: 1; text-align: right; font-family: monospace; font-size: 11px; color: #e0e0e0; }
     .tyre-icon {
-      width: 16px; height: 16px; border-radius: 50%; margin-left: 6px;
+      width: 16px; height: 16px; border-radius: 50%; margin-left: 5px;
       display: inline-flex; align-items: center; justify-content: center;
       font-size: 9px; font-weight: 900; background: #111; flex-shrink: 0;
     }
@@ -162,35 +160,36 @@
     }
     .badge-pit { background: var(--f1-yellow); color: #000; }
     .badge-out { background: #e10600; color: #fff; }
+    .badge-yield { background: #3b4b6b; color: #9fc5ff; }
 
     /* =========================================================
-       WEATHER WIDGET (BOTTOM LEFT OF SCREEN)
+       WEATHER WIDGET (BOTTOM LEFT)
     ========================================================= */
     #weather-widget {
       position: absolute; left: 14px; bottom: 14px; z-index: 22;
       background: var(--f1-panel); border: 1px solid var(--f1-border);
       border-left: 4px solid var(--f1-blue); border-radius: 6px;
-      padding: 8px 12px; width: 202px; font-size: 11px; display: none;
+      padding: 8px 12px; width: 205px; font-size: 11px; display: none;
       box-shadow: 0 8px 24px rgba(0,0,0,0.7);
     }
     body.admin-mode #weather-widget {
-      left: 262px; bottom: 242px;
+      left: 252px; bottom: 245px;
     }
     .weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
     .weather-item span { display: block; color: #999; font-size: 9px; }
     .weather-item strong { font-size: 12px; color: #fff; }
 
     /* =========================================================
-       FLYING LAP SPOTLIGHT TIMER (FP & QUALIFYING)
+       FLYING LAP SPOTLIGHT GRAPHIC (FP & QUALIFYING)
     ========================================================= */
     #flying-lap-box {
       position: absolute; bottom: 86px; left: 50%; transform: translateX(-50%);
       z-index: 26; background: rgba(15, 15, 22, 0.95);
       border-top: 3px solid var(--f1-purple); border-radius: 6px;
-      padding: 8px 18px; min-width: 270px; display: none;
+      padding: 8px 18px; min-width: 275px; display: none;
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
-    body.admin-mode #flying-lap-box { bottom: 295px; }
+    body.admin-mode #flying-lap-box { bottom: 300px; }
     .fl-header { font-size: 10px; font-weight: 900; color: var(--f1-purple); letter-spacing: 1px; }
     .fl-main { display: flex; justify-content: space-between; align-items: baseline; margin-top: 3px; gap: 16px; }
     .fl-drv { font-size: 15px; font-weight: 900; }
@@ -207,7 +206,7 @@
       padding: 7px 18px; display: flex; align-items: center; gap: 18px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.75);
     }
-    body.admin-mode #telemetry-hud { bottom: 240px; }
+    body.admin-mode #telemetry-hud { bottom: 245px; }
     .tele-pos-box {
       background: var(--f1-red); color: #fff; font-weight: 900; font-size: 18px;
       padding: 4px 10px; border-radius: 4px; min-width: 42px; text-align: center;
@@ -227,7 +226,7 @@
 
     #viewer-cam-popup {
       background: var(--f1-panel); border: 1px solid var(--f1-border);
-      border-radius: 8px; padding: 12px; width: 250px;
+      border-radius: 8px; padding: 12px; width: 255px;
       display: none; flex-direction: column; gap: 8px;
       box-shadow: 0 12px 32px rgba(0,0,0,0.85);
     }
@@ -243,7 +242,7 @@
       display: flex; flex-direction: column;
     }
     body.admin-mode #gps-widget {
-      position: fixed; top: 42px; right: 0; width: 260px; height: 220px;
+      position: fixed; top: 42px; right: 0; width: 260px; height: 215px;
       border-radius: 0; border-left: 1px solid #2a2a3a;
       display: flex !important;
     }
@@ -265,7 +264,7 @@
       position: absolute; bottom: 85px; left: 230px; z-index: 25;
       display: flex; flex-direction: column; gap: 6px; pointer-events: none;
     }
-    body.admin-mode #pit-popup-container { left: 265px; bottom: 295px; }
+    body.admin-mode #pit-popup-container { left: 255px; bottom: 300px; }
     .pit-popup {
       background: linear-gradient(90deg, #15151e 0%, #252535 100%);
       border-left: 4px solid var(--f1-yellow); border-radius: 4px;
@@ -291,7 +290,7 @@
     }
 
     /* =========================================================
-       ADMIN BROADCAST STUDIO LAYOUT (TOP BAR + RIGHT MONITOR + BOTTOM DECK)
+       ADMIN BROADCAST STUDIO LAYOUT
     ========================================================= */
     #admin-studio-header {
       position: fixed; top: 0; left: 0; right: 0; height: 42px;
@@ -302,7 +301,7 @@
     body.admin-mode #admin-studio-header { display: flex; }
 
     #admin-right-telemetry-monitor {
-      position: fixed; top: 262px; right: 0; width: 260px; bottom: 230px;
+      position: fixed; top: 257px; right: 0; width: 260px; bottom: 235px;
       background: #101018; border-left: 1px solid #2a2a3a; border-top: 1px solid #2a2a3a;
       padding: 10px; display: none; flex-direction: column; gap: 8px;
       overflow-y: auto; z-index: 30; font-size: 11px;
@@ -310,27 +309,27 @@
     body.admin-mode #admin-right-telemetry-monitor { display: flex; }
 
     #admin-studio-deck {
-      position: fixed; left: 0; right: 0; bottom: 0; height: 230px;
+      position: fixed; left: 0; right: 0; bottom: 0; height: 235px;
       background: #14141d; border-top: 3px solid var(--f1-red);
-      display: none; grid-template-columns: 1.2fr 1.5fr 1.2fr 1fr;
-      gap: 12px; padding: 12px 16px; z-index: 50; overflow-y: auto;
+      display: none; grid-template-columns: 1.3fr 1.45fr 1.25fr 1fr;
+      gap: 10px; padding: 10px 14px; z-index: 50; overflow-y: auto;
     }
     body.admin-mode #admin-studio-deck { display: grid; }
 
     .deck-col {
       background: #1b1b28; border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 7px;
+      border-radius: 6px; padding: 9px; display: flex; flex-direction: column; gap: 6px;
     }
     .deck-title {
       font-size: 11px; font-weight: 900; color: var(--f1-red);
-      letter-spacing: 0.8px; border-bottom: 1px solid rgba(255,255,255,0.1);
+      letter-spacing: 0.6px; border-bottom: 1px solid rgba(255,255,255,0.1);
       padding-bottom: 4px; margin-bottom: 2px;
     }
     .deck-row { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 
     .btn {
       background: #282838; color: #fff; border: 1px solid rgba(255,255,255,0.18);
-      padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: 700;
+      padding: 5px 9px; border-radius: 4px; font-size: 11px; font-weight: 700;
       cursor: pointer; transition: all 0.12s;
     }
     .btn:hover { background: #38384f; }
@@ -340,18 +339,18 @@
     .btn-yellow { background: #d4a000; color: #000; border-color: #ffd000; font-weight: 900; }
 
     .url-share-box {
-      background: #0b0b12; border: 1px solid #333; padding: 5px 8px;
+      background: #0b0b12; border: 1px solid #333; padding: 4px 8px;
       border-radius: 4px; font-family: monospace; font-size: 11px; width: 100%;
       color: #00e1ff; overflow-x: auto; white-space: nowrap; user-select: all;
     }
     select, input[type="number"], input[type="text"] {
       background: #12121a; color: #fff; border: 1px solid rgba(255,255,255,0.25);
-      padding: 5px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;
+      padding: 4px 7px; border-radius: 4px; font-size: 12px; font-weight: 700;
     }
 
     /* Modals */
     .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
       z-index: 200; display: none; align-items: center; justify-content: center;
       padding: 18px; pointer-events: auto;
     }
@@ -376,9 +375,7 @@
 </head>
 <body class="viewer-mode">
 
-  <!-- =========================================================
-       INVITE ONLY GATE SCREEN (Shown when neither /admin nor ?room=...)
-  ========================================================= -->
+  <!-- INVITE ONLY GATE SCREEN -->
   <div id="invite-gate-screen">
     <div class="gate-card">
       <div class="gate-badge">F1 GP BETTING</div>
@@ -405,13 +402,14 @@
         <strong id="admin-header-session">FREE PRACTICE</strong>
         <span id="admin-header-timer" style="color:var(--f1-yellow); font-family:monospace; font-size:14px;">LIVE</span>
       </div>
-      <div style="display:flex; align-items:center; gap:16px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button id="btn-admin-sound" class="btn active">🔊 サウンド: ON</button>
         <span id="admin-bet-count-label" style="color:#00e1ff;">ベット完了: 0名</span>
         <span id="admin-peer-count-label" style="color:#aaa;">接続参加者: 0人</span>
       </div>
     </div>
 
-    <!-- VIEWER COLLAPSIBLE TOP BAR (Button -> Dropdown) -->
+    <!-- VIEWER COLLAPSIBLE TOP BAR -->
     <div id="viewer-top-bar" class="interactive">
       <div style="display:flex; gap:8px; align-items:center;">
         <button id="btn-toggle-top-info" class="top-toggle-btn">
@@ -419,6 +417,7 @@
           <span id="viewer-compact-session">LIVE</span>
           <span>| 情報・所持金 ▾</span>
         </button>
+        <button id="btn-viewer-sound" class="btn active" style="padding:7px 11px;">🔊 音: ON</button>
         <button id="btn-floating-bet" class="btn btn-red" style="display:none; padding:7px 14px; font-size:12px;">
           💰 勝者予想ベット画面を開く
         </button>
@@ -440,10 +439,10 @@
       </div>
     </div>
 
-    <!-- SAFETY CAR / VSC BANNER -->
+    <!-- SAFETY CAR / VSC / PODIUM BANNER -->
     <div id="race-control-banner">⚠️ SAFETY CAR DEPLOYED</div>
 
-    <!-- SLIM LIVE TIMING TOWER (5-Second Snapshot Interval) -->
+    <!-- SLIM LIVE TIMING TOWER -->
     <div id="timing-tower" class="interactive">
       <div class="tower-header">
         <span id="tower-title">LIVE TIMING</span>
@@ -480,7 +479,7 @@
 
     <!-- FLYING LAP SPOTLIGHT GRAPHIC (FP & QUALIFYING) -->
     <div id="flying-lap-box">
-      <div class="fl-header">⏱ LIVE FLYING LAP</div>
+      <div class="fl-header">⏱ LIVE FLYING LAP (ATTACK)</div>
       <div class="fl-main">
         <span id="fl-drv-label" class="fl-drv">1 VER</span>
         <span id="fl-time-label" class="fl-time">1:12.4</span>
@@ -524,7 +523,7 @@
     <!-- ADMIN RIGHT TELEMETRY MONITOR -->
     <div id="admin-right-telemetry-monitor" class="interactive">
       <div style="font-weight:900; color:var(--f1-red); border-bottom:1px solid #2a2a3a; padding-bottom:4px;">
-        LIVE TELEMETRY & RACE MONITOR
+        LIVE TELEMETRY & ATTACK STATUS
       </div>
       <div id="admin-live-stats-list" style="display:flex; flex-direction:column; gap:5px;"></div>
     </div>
@@ -539,7 +538,7 @@
         <div style="font-size:11px; color:#aaa; margin-top:4px;">オンボード対象選手:</div>
         <select id="user-onboard-select" style="width:100%;"></select>
       </div>
-      <button id="btn-toggle-cam-menu" class="top-toggle-btn" style="border-left-color:var(--f1-Red);">
+      <button id="btn-toggle-cam-menu" class="top-toggle-btn" style="border-left-color:var(--f1-red);">
         🎥 映像・オンボード切替 ▴
       </button>
     </div>
@@ -548,19 +547,23 @@
          ADMIN BOTTOM STUDIO SWITCHER & RACE CONTROL DECK
     ========================================================= -->
     <div id="admin-studio-deck" class="interactive">
-      <!-- Col 1: Room & Session Progression -->
+      <!-- Col 1: Room, Laps & Session Progression -->
       <div class="deck-col">
-        <div class="deck-title">1. 招待URL ＆ セッション進行管理</div>
-        <div style="font-size:10px; color:#bbb;">参加者用招待URL (コピーして共有):</div>
+        <div class="deck-title">1. 招待URL・周回数・セッション進行管理</div>
         <div id="share-url-display" class="url-share-box">発行中...</div>
-        <div class="deck-row" style="margin-top:2px;">
+        <div class="deck-row">
           <label style="font-size:11px;">予選(秒):</label>
-          <input type="number" id="quali-duration-input" value="60" min="15" max="300" style="width:58px;" />
-          <button id="btn-start-quali" class="btn btn-red">予選開始</button>
-          <button id="btn-end-quali" class="btn">予選終了→ベット開始</button>
+          <input type="number" id="quali-duration-input" value="60" min="15" max="300" style="width:52px;" />
+          <label style="font-size:11px; margin-left:4px;">決勝周回数:</label>
+          <input type="number" id="race-laps-input" value="5" min="1" max="50" style="width:48px;" />
         </div>
         <div class="deck-row">
-          <button id="btn-close-betting" class="btn btn-red">賭け締切 → フォーメーション(0周目)</button>
+          <button id="btn-start-quali" class="btn btn-red">予選開始</button>
+          <button id="btn-end-quali" class="btn">予選終了→ベット</button>
+          <button id="btn-reroll-Random" class="btn" title="能力値を再シャッフルしてFP再開">🎲 新規FP</button>
+        </div>
+        <div class="deck-row">
+          <button id="btn-close-betting" class="btn btn-red">賭け締切 → 0周目</button>
           <button id="btn-five-lights" class="btn btn-green" disabled>🚦 5ライト＆スタート</button>
         </div>
       </div>
@@ -573,6 +576,7 @@
           <button class="btn cam-mode-btn" data-cam="chase">チェイス</button>
           <button class="btn cam-mode-btn" data-cam="heli">上空ヘリ</button>
           <button class="btn cam-mode-btn" data-cam="onboard">オンボード</button>
+          <button class="btn cam-mode-btn" data-cam="podium">表彰台カメラ</button>
           <button id="btn-admin-all-onboard" class="btn">全12台マルチ: OFF</button>
         </div>
         <div style="font-size:10px; color:#aaa; margin-top:2px;">国際映像ターゲット選手 (ワンタッチ切替):</div>
@@ -581,12 +585,13 @@
 
       <!-- Col 3: Broadcast Overlay ON/OFF Toggles -->
       <div class="deck-col">
-        <div class="deck-title">3. 国際映像 テロップ表示 / 非表示切替</div>
+        <div class="deck-title">3. 国際放送 テロップ表示 / 非表示切替</div>
         <div class="deck-row">
           <button id="btn-toggle-tower" class="btn active">順位タワー: ON</button>
           <button id="btn-toggle-times" class="btn active">タイム差: ON</button>
           <button id="btn-toggle-tyres" class="btn active">タイヤ表示: ON</button>
           <button id="btn-toggle-banner" class="btn active">選手名・順位バナー: ON</button>
+          <button id="btn-toggle-flying" class="btn active">リアルタイム計測: ON</button>
           <button id="btn-toggle-gps" class="btn active">GPSマップ: ON</button>
           <button id="btn-toggle-weather" class="btn active">気象情報(左下): ON</button>
         </div>
@@ -614,7 +619,6 @@
   <!-- =========================================================
        MODALS (PARTICIPANT ONLY: NAME SETUP, BETTING, RESULTS)
   ========================================================= -->
-  <!-- 1. Initial Name Setup -->
   <div id="name-modal" class="modal-backdrop">
     <div class="modal-card" style="max-width:410px;">
       <h3 style="font-size:19px; margin-bottom:6px;">F1 GP BETTING 参加登録</h3>
@@ -628,12 +632,11 @@
     </div>
   </div>
 
-  <!-- 2. Betting Modal (Participants Only) -->
   <div id="betting-modal" class="modal-backdrop">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h3 style="font-size:19px;">🏁 予選終了！ スターティンググリッド ＆ 勝者予想ベット</h3>
-        <button id="btn- minimize-bet" class="btn" onclick="document.getElementById('betting-modal').style.display='none'">一時閉じる</button>
+        <button class="btn" onclick="document.getElementById('betting-modal').style.display='none'">一時閉じる</button>
       </div>
       <p style="font-size:12px; color:#bbb; margin-top:4px;">
         ポールポジション(P1)が最も低倍率、最後尾(P12)が最も高倍率です。<strong>選んだ選手が1位・2位・3位に入れば的中！</strong>
@@ -655,69 +658,198 @@
     </div>
   </div>
 
-  <!-- 3. Race Result Modal -->
-  <div id="result-modal" class="modal-backdrop">
-    <div class="modal-card" style="max-width:540px;">
-      <h3 style="font-size:20px; margin-bottom:10px;">🏆 決勝レース結果 ＆ 配当精算</h3>
-      <div id="result-podium-box" style="margin:12px 0; display:flex; flex-direction:column; gap:7px;"></div>
-      <div id="result-payout-box" style="background:#111119; padding:12px; border-radius:6px; margin-bottom:14px; font-size:13px;"></div>
-      <button id="btn-close-result" class="btn btn-red" style="width:100%; padding:10px;">閉じる</button>
+  <div id="result-modal" class="modal-backdrop" style="background:rgba(0,0,0,0.45);">
+    <div class="modal-card" style="max-width:520px; margin-top:auto; margin-bottom:25px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="font-size:19px;">🏆 表彰式 (PODIUM CEREMONY) ＆ 配当精算</h3>
+        <button id="btn-close-result" class="btn">モーダルを隠して3D表彰台を見る</button>
+      </div>
+      <div id="result-podium-box" style="margin:10px 0; display:flex; flex-direction:column; gap:6px;"></div>
+      <div id="result-payout-box" style="background:#111119; padding:12px; border-radius:6px; font-size:13px;"></div>
     </div>
   </div>
 
 <script>
 /* ============================================================================
-   1. 2026 F1 DRIVERS POOL (12 Selected Randomly Per Game)
+   1. 2026 F1 DRIVERS POOL (Skills are randomized every game!)
 ============================================================================ */
 const ALL_2026_DRIVERS = [
-  { num: 1,  code: 'VER', name: 'M. Verstappen', team: 'Red Bull',     color: '#1e41ff', sec: '#ff1801', skill: 0.98 },
-  { num: 4,  code: 'NOR', name: 'L. Norris',     team: 'McLaren',      color: '#ff8000', sec: '#111111', skill: 0.97 },
-  { num: 16, code: 'LEC', name: 'C. Leclerc',    team: 'Ferrari',      color: '#dc0000', sec: '#ffffff', skill: 0.97 },
-  { num: 44, code: 'HAM', name: 'L. Hamilton',   team: 'Ferrari',      color: '#dc0000', sec: '#ffd000', skill: 0.96 },
-  { num: 81, code: 'PIA', name: 'O. Piastri',    team: 'McLaren',      color: '#ff8000', sec: '#0090ff', skill: 0.96 },
-  { num: 63, code: 'RUS', name: 'G. Russell',    team: 'Mercedes',     color: '#00d2be', sec: '#222222', skill: 0.95 },
-  { num: 12, code: 'ANT', name: 'K. Antonelli',  team: 'Mercedes',     color: '#00d2be', sec: '#ffffff', skill: 0.92 },
-  { num: 14, code: 'ALO', name: 'F. Alonso',     team: 'Aston Martin', color: '#006f62', sec: '#cedc00', skill: 0.94 },
-  { num: 55, code: 'SAI', name: 'C. Sainz',      team: 'Williams',     color: '#005aff', sec: '#ffffff', skill: 0.94 },
-  { num: 23, code: 'ALB', name: 'A. Albon',      team: 'Williams',     color: '#005aff', sec: '#00d2ff', skill: 0.92 },
-  { num: 10, code: 'GAS', name: 'P. Gasly',      team: 'Alpine',       color: '#0090ff', sec: '#ff66b2', skill: 0.92 },
-  { num: 30, code: 'LAW', name: 'L. Lawson',     team: 'Racing Bulls', color: '#2b4562', sec: '#ffffff', skill: 0.91 },
-  { num: 22, code: 'TSU', name: 'Y. Tsunoda',    team: 'Racing Bulls', color: '#1634cb', sec: '#ffffff', skill: 0.92 },
-  { num: 87, code: 'BEA', name: 'O. Bearman',    team: 'Haas',         color: '#b6babd', sec: '#e10600', skill: 0.90 },
-  { num: 31, code: 'OCO', name: 'E. Ocon',       team: 'Haas',         color: '#b6babd', sec: '#111111', skill: 0.91 },
-  { num: 27, code: 'HUL', name: 'N. Hulkenberg', team: 'Audi',         color: '#f50537', sec: '#cccccc', skill: 0.91 },
-  { num: 5,  code: 'BOR', name: 'G. Bortoleto',  team: 'Audi',         color: '#f50537', sec: '#009b3a', skill: 0.89 },
-  { num: 6,  code: 'HAD', name: 'I. Hadjar',     team: 'Racing Bulls', color: '#1634cb', sec: '#ff0000', skill: 0.89 },
-  { num: 18, code: 'STR', name: 'L. Stroll',     team: 'Aston Martin', color: '#006f62', sec: '#ffffff', skill: 0.89 },
-  { num: 11, code: 'PER', name: 'S. Perez',      team: 'Cadillac',     color: '#d4af37', sec: '#111111', skill: 0.91 }
+  { num: 1,  code: 'VER', name: 'M. Verstappen', team: 'Red Bull',     color: '#1e41ff', sec: '#ff1801' },
+  { num: 4,  code: 'NOR', name: 'L. Norris',     team: 'McLaren',      color: '#ff8000', sec: '#111111' },
+  { num: 16, code: 'LEC', name: 'C. Leclerc',    team: 'Ferrari',      color: '#dc0000', sec: '#ffffff' },
+  { num: 44, code: 'HAM', name: 'L. Hamilton',   team: 'Ferrari',      color: '#dc0000', sec: '#ffd000' },
+  { num: 81, code: 'PIA', name: 'O. Piastri',    team: 'McLaren',      color: '#ff8000', sec: '#0090ff' },
+  { num: 63, code: 'RUS', name: 'G. Russell',    team: 'Mercedes',     color: '#00d2be', sec: '#222222' },
+  { num: 12, code: 'ANT', name: 'K. Antonelli',  team: 'Mercedes',     color: '#00d2be', sec: '#ffffff' },
+  { num: 14, code: 'ALO', name: 'F. Alonso',     team: 'Aston Martin', color: '#006f62', sec: '#cedc00' },
+  { num: 55, code: 'SAI', name: 'C. Sainz',      team: 'Williams',     color: '#005aff', sec: '#ffffff' },
+  { num: 23, code: 'ALB', name: 'A. Albon',      team: 'Williams',     color: '#005aff', sec: '#00d2ff' },
+  { num: 10, code: 'GAS', name: 'P. Gasly',      team: 'Alpine',       color: '#0090ff', sec: '#ff66b2' },
+  { num: 30, code: 'LAW', name: 'L. Lawson',     team: 'Racing Bulls', color: '#2b4562', sec: '#ffffff' },
+  { num: 22, code: 'TSU', name: 'Y. Tsunoda',    team: 'Racing Bulls', color: '#1634cb', sec: '#ffffff' },
+  { num: 87, code: 'BEA', name: 'O. Bearman',    team: 'Haas',         color: '#b6babd', sec: '#e10600' },
+  { num: 31, code: 'OCO', name: 'E. Ocon',       team: 'Haas',         color: '#b6babd', sec: '#111111' },
+  { num: 27, code: 'HUL', name: 'N. Hulkenberg', team: 'Audi',         color: '#f50537', sec: '#cccccc' },
+  { num: 5,  code: 'BOR', name: 'G. Bortoleto',  team: 'Audi',         color: '#f50537', sec: '#009b3a' },
+  { num: 6,  code: 'HAD', name: 'I. Hadjar',     team: 'Racing Bulls', color: '#1634cb', sec: '#ff0000' },
+  { num: 18, code: 'STR', name: 'L. Stroll',     team: 'Aston Martin', color: '#006f62', sec: '#ffffff' },
+  { num: 11, code: 'PER', name: 'S. Perez',      team: 'Cadillac',     color: '#d4af37', sec: '#111111' }
 ];
 
 /* ============================================================================
-   2. STRICT ACCESS CONTROL (/admin vs ?room= vs Blocked Gate)
+   2. WEB AUDIO API F1 SYNTHESIZER SOUND ENGINE
+============================================================================ */
+class F1SoundEngine {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+    this.initialized = false;
+    this.osc1 = null;
+    this.osc2 = null;
+    this.engineGain = null;
+    this.filter = null;
+  }
+
+  init() {
+    if (this.initialized) return;
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    this.ctx = new AudioCtx();
+
+    // Dual-oscillator F1 V6 Hybrid exhaust synth
+    this.osc1 = this.ctx.createOscillator();
+    this.osc2 = this.ctx.createOscillator();
+    this.osc1.type = 'sawtooth';
+    this.osc2.type = 'triangle';
+
+    this.filter = this.ctx.createBiquadFilter();
+    this.filter.type = 'bandpass';
+    this.filter.frequency.value = 380;
+    this.filter.Q.value = 1.8;
+
+    this.engineGain = this.ctx.createGain();
+    this.engineGain.gain.value = 0.0;
+
+    this.osc1.connect(this.filter);
+    this.osc2.connect(this.filter);
+    this.filter.connect(this.engineGain);
+    this.engineGain.connect(this.ctx.destination);
+
+    this.osc1.start();
+    this.osc2.start();
+    this.initialized = true;
+  }
+
+  resume() {
+    if (!this.initialized) this.init();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  toggle() {
+    this.resume();
+    this.enabled = !this.enabled;
+    if (!this.enabled && this.engineGain && this.ctx) {
+      this.engineGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+    }
+    return this.enabled;
+  }
+
+  updateEngine(speedKmh, phase) {
+    if (!this.initialized || !this.enabled || !this.ctx) return;
+    if (phase === 'BETTING' || phase === 'PODIUM') {
+      this.engineGain.gain.setTargetAtTime(0.0, this.ctx.currentTime, 0.1);
+      return;
+    }
+    const gear = speedKmh < 5 ? 1 : Math.min(8, Math.max(1, Math.floor(speedKmh / 42) + 1));
+    const gearRatioSpeed = (speedKmh % 42) / 42;
+    // Simulate RPM between idle (90Hz) and 15,000 RPM scream (380Hz fundamental)
+    const baseFreq = speedKmh < 3
+      ? 68 + Math.sin(performance.now() * 0.02) * 5
+      : 110 + (speedKmh * 0.55) + (gearRatioSpeed * 85);
+
+    const now = this.ctx.currentTime;
+    this.osc1.frequency.setTargetAtTime(baseFreq, now, 0.04);
+    this.osc2.frequency.setTargetAtTime(baseFreq * 1.5, now, 0.04);
+    this.filter.frequency.setTargetAtTime(baseFreq * 2.8, now, 0.05);
+
+    const targetVol = speedKmh < 3 ? 0.025 : Math.min(0.09, 0.03 + (speedKmh / 360) * 0.06);
+    this.engineGain.gain.setTargetAtTime(targetVol, now, 0.06);
+  }
+
+  playTone(freq, duration, type = 'sine', vol = 0.12) {
+    if (!this.enabled) return;
+    this.resume();
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(vol, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+    osc.connect(g);
+    g.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + duration);
+  }
+
+  playLightBeep(isGo = false) {
+    if (isGo) {
+      this.playTone(880, 0.65, 'sawtooth', 0.16);
+      setTimeout(() => this.playTone(1174.6, 0.5, 'triangle', 0.14), 60);
+    } else {
+      this.playTone(440, 0.22, 'square', 0.12);
+    }
+  }
+
+  playPitDing() {
+    this.playTone(987.7, 0.18, 'sine', 0.1);
+    setTimeout(() => this.playTone(1318.5, 0.35, 'sine', 0.1), 140);
+  }
+
+  playPodiumFanfare() {
+    if (!this.enabled) return;
+    const notes = [
+      { f: 523.25, d: 0.25, t: 0 },
+      { f: 659.25, d: 0.25, t: 220 },
+      { f: 783.99, d: 0.25, t: 440 },
+      { f: 1046.5, d: 0.65, t: 660 },
+      { f: 783.99, d: 0.22, t: 1200 },
+      { f: 1046.5, d: 0.95, t: 1450 }
+    ];
+    notes.forEach(n => {
+      setTimeout(() => this.playTone(n.f, n.d, 'triangle', 0.15), n.t);
+    });
+  }
+}
+
+const soundEngine = new F1SoundEngine();
+window.addEventListener('pointerdown', () => soundEngine.resume(), { once: false });
+
+/* ============================================================================
+   3. STRICT ACCESS CONTROL (/admin vs ?room= vs Blocked Gate)
 ============================================================================ */
 const urlParams = new URLSearchParams(window.location.search);
 const roomParam = urlParams.get('room');
 const isUrlAdmin = window.location.pathname.endsWith('/admin') || window.location.hash === '#admin' || urlParams.has('admin');
 
-// Only the creator who opened /admin without a participant ?room= parameter is Admin
 const isAdmin = isUrlAdmin && !roomParam;
 const isValidViewer = Boolean(roomParam);
 
 if (!isAdmin && !isValidViewer) {
-  // Show "招待URLから参加してください" gate screen
   document.getElementById('invite-gate-screen').style.display = 'flex';
 }
-
 if (isAdmin) {
   document.body.classList.remove('viewer-mode');
   document.body.classList.add('admin-mode');
 }
 
 /* ============================================================================
-   3. PARTICIPANT LOCAL STORAGE PROFILE (¥100,000 Initial)
+   4. PARTICIPANT LOCAL STORAGE PROFILE
 ============================================================================ */
-const STORAGE_KEY_NAME = 'f1_bet_player_name_v2';
-const STORAGE_KEY_MONEY = 'f1_bet_player_money_v2';
+const STORAGE_KEY_NAME = 'f1_bet_player_name_v3';
+const STORAGE_KEY_MONEY = 'f1_bet_player_money_v3';
 
 let playerProfile = {
   id: 'plr_' + Math.random().toString(36).substring(2, 10),
@@ -728,7 +860,6 @@ let playerProfile = {
   betConfirmed: false,
   betSessionId: null
 };
-
 if (isNaN(playerProfile.money) || playerProfile.money < 0) playerProfile.money = 100000;
 
 function saveProfile() {
@@ -740,19 +871,20 @@ function saveProfile() {
 }
 
 /* ============================================================================
-   4. GAME STATE & CONFIGURATION
+   5. GAME STATE & CONFIGURATION
 ============================================================================ */
-const TOTAL_RACE_LAPS = 5;
 let gameState = {
   sessionId: 'ses_' + Date.now(),
-  phase: 'FREE_PRACTICE', // FREE_PRACTICE, QUALIFYING, BETTING, FORMATION_LAP, FIVE_LIGHTS, RACE, FINISHED
+  phase: 'FREE_PRACTICE', // FREE_PRACTICE, QUALIFYING, BETTING, FORMATION_LAP, FIVE_LIGHTS, RACE, PODIUM
   timer: 0,
-  raceLap: 0, // Formation Lap = 0, Race = 1..5
+  raceLap: 0,
+  totalRaceLaps: 5,
+  finishedCounter: 0,
   raceControl: 'GREEN', // GREEN, VSC, SC
   scTimer: 0,
   scTrackT: 0.12,
   weather: {
-    condition: 'DRY', // DRY, LIGHT_RAIN, HEAVY_RAIN
+    condition: 'DRY',
     trackTemp: 36.2,
     airTemp: 23.8,
     rainPct: 0,
@@ -760,11 +892,12 @@ let gameState = {
   },
   broadcast: {
     targetCode: 'VER',
-    cameraMode: 'track', // track, chase, heli, onboard
+    cameraMode: 'track', // track, chase, heli, onboard, podium
     showTower: true,
     showTimes: true,
     showTyres: true,
     showBanner: true,
+    showFlyingLap: true,
     showGps: true,
     showWeather: true
   },
@@ -773,18 +906,15 @@ let gameState = {
   betsReceived: {}
 };
 
-// Default viewer camera is World Feed Only (Onboard OFF)
 let userViewConfig = {
   layout: 'world', // world, dual, onboard
   onboardCode: 'VER',
   adminGrid12: false
 };
 
-// 5-Second Snapshot for Timing Tower
 let lastTowerSnapshotTime = 0;
 let towerSnapshotHTML = '';
 
-// Live Flying Lap Spotlight State (FP / Qualifying)
 let flyingSpotlight = {
   code: null,
   status: 'SEARCHING', // SEARCHING, RUNNING, HOLD, COOLDOWN
@@ -801,7 +931,7 @@ function formatLapTime(sec) {
 }
 
 /* ============================================================================
-   5. THREE.JS 3D ELEVATED CIRCUIT, 3D KERBS, DECORATIONS & RAIN
+   6. THREE.JS 3D ELEVATED CIRCUIT, RACING LINE, 3D PODIUM & CONFETTI
 ============================================================================ */
 const container = document.getElementById('canvas-container');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -813,14 +943,12 @@ container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d1526);
-scene.fog = new THREE.FogExp2(0x0d1526, 0.0005);
+scene.fog = new THREE.FogExp2(0x0d1526, 0.00045);
 
 const worldCamera = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 3500);
 const pipCamera = new THREE.PerspectiveCamera(62, 16 / 9, 0.25, 2500);
 
-const ambientLight = new THREE.AmbientLight(0xdbe8ff, 0.7);
-scene.add(ambientLight);
-
+scene.add(new THREE.AmbientLight(0xdbe8ff, 0.72));
 const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.3);
 sunLight.position.set(350, 550, 250);
 sunLight.castShadow = true;
@@ -828,7 +956,6 @@ sunLight.shadow.mapSize.width = 2048;
 sunLight.shadow.mapSize.height = 2048;
 scene.add(sunLight);
 
-// Base Terrain Plane
 const groundMesh = new THREE.Mesh(
   new THREE.PlaneGeometry(6000, 6000),
   new THREE.MeshLambertMaterial({ color: 0x172e1f })
@@ -838,47 +965,77 @@ groundMesh.position.y = -4.0;
 groundMesh.receiveShadow = true;
 scene.add(groundMesh);
 
-// 3D Circuit Control Points WITH ELEVATION (Y-axis hills & valleys)
 const TRACK_POINTS = [
-  new THREE.Vector3(-320, 0.0, 420),   // Main Straight Start (Flat)
-  new THREE.Vector3(0, 0.0, 420),      // Start/Finish Line (Flat)
-  new THREE.Vector3(380, 0.0, 420),    // Main Straight End
-  new THREE.Vector3(520, 4.5, 340),    // Turn 1 Uphill Braking
-  new THREE.Vector3(540, 11.0, 160),   // Turn 2 Crest
-  new THREE.Vector3(340, 15.5, 40),    // Turn 3 High Plateau Chicane
-  new THREE.Vector3(460, 18.0, -140),  // Turn 4 Mountain Sweep
-  new THREE.Vector3(380, 12.0, -380),  // Turn 5 Downhill Plunge
-  new THREE.Vector3(120, 3.0, -460),   // Back Straight Start
-  new THREE.Vector3(-240, -2.5, -460), // Back Straight Dip
-  new THREE.Vector3(-480, 2.0, -340),  // Hairpin Entry
-  new THREE.Vector3(-520, 6.5, -180),  // Hairpin Exit Climb
-  new THREE.Vector3(-280, 9.0, -60),   // Infield S-Curve 1
-  new THREE.Vector3(-260, 4.5, 140),   // Infield S-Curve 2 Downhill
-  new THREE.Vector3(-480, 0.5, 280),   // Final Corner onto Main Straight
+  new THREE.Vector3(-320, 0.0, 420),
+  new THREE.Vector3(0, 0.0, 420),
+  new THREE.Vector3(380, 0.0, 420),
+  new THREE.Vector3(520, 4.5, 340),
+  new THREE.Vector3(540, 11.0, 160),
+  new THREE.Vector3(340, 15.5, 40),
+  new THREE.Vector3(460, 18.0, -140),
+  new THREE.Vector3(380, 12.0, -380),
+  new THREE.Vector3(120, 3.0, -460),
+  new THREE.Vector3(-240, -2.5, -460),
+  new THREE.Vector3(-480, 2.0, -340),
+  new THREE.Vector3(-520, 6.5, -180),
+  new THREE.Vector3(-280, 9.0, -60),
+  new THREE.Vector3(-260, 4.5, 140),
+  new THREE.Vector3(-480, 0.5, 280),
 ];
 
 const mainCurve = new THREE.CatmullRomCurve3(TRACK_POINTS, true, 'centripetal', 0.5);
 const TRACK_SAMPLES = 900;
-const TRACK_WIDTH = 22;
+const TRACK_WIDTH = 24; // Wide track for multi-lane overtaking
 const START_LINE_T = 0.085;
 const TRACK_LENGTH_METERS = 4650;
 
-// Curvature Array for Corner Detection & 3D Kerb Placement
 const trackCurvature = new Float32Array(TRACK_SAMPLES);
+const signedCurvature = new Float32Array(TRACK_SAMPLES);
+const idealRacingLine = new Float32Array(TRACK_SAMPLES);
+
 for (let i = 0; i < TRACK_SAMPLES; i++) {
-  const t1 = ((i - 4 + TRACK_SAMPLES) % TRACK_SAMPLES) / TRACK_SAMPLES;
-  const t2 = ((i + 4) % TRACK_SAMPLES) / TRACK_SAMPLES;
+  const t1 = ((i - 5 + TRACK_SAMPLES) % TRACK_SAMPLES) / TRACK_SAMPLES;
+  const t2 = ((i + 5) % TRACK_SAMPLES) / TRACK_SAMPLES;
   const tan1 = mainCurve.getTangentAt(t1);
   const tan2 = mainCurve.getTangentAt(t2);
   trackCurvature[i] = tan1.angleTo(tan2);
+  const crossY = tan1.x * tan2.z - tan1.z * tan2.x;
+  signedCurvature[i] = crossY;
 }
 
+// Compute full-width Out-In-Out Racing Line using corner apex and entry/exit
+for (let i = 0; i < TRACK_SAMPLES; i++) {
+  const aheadCorner = signedCurvature[(i + 18) % TRACK_SAMPLES];
+  const atApex = signedCurvature[i];
+  const behindCorner = signedCurvature[(i - 14 + TRACK_SAMPLES) % TRACK_SAMPLES];
+
+  // Dive into apex (inside of turn), swing wide on entry and exit (up to ±8.8m)
+  let offset = 0;
+  if (Math.abs(atApex) > 0.025) {
+    offset = -Math.sign(atApex) * Math.min(8.8, Math.abs(atApex) * 75);
+  } else {
+    offset = Math.sign(aheadCorner + behindCorner) * Math.min(8.5, Math.abs(aheadCorner + behindCorner) * 55);
+  }
+  idealRacingLine[i] = offset;
+}
+
+// Smooth the ideal racing line
+for (let pass = 0; pass < 4; pass++) {
+  for (let i = 0; i < TRACK_SAMPLES; i++) {
+    const prev = idealRacingLine[(i - 3 + TRACK_SAMPLES) % TRACK_SAMPLES];
+    const next = idealRacingLine[(i + 3) % TRACK_SAMPLES];
+    idealRacingLine[i] = (prev + idealRacingLine[i] * 2 + next) / 4;
+  }
+}
+
+// High-speed F1 cornering: Less deceleration in curves!
 function getTargetSpeedAt(t) {
   const idx = Math.floor(((t % 1 + 1) % 1) * TRACK_SAMPLES);
-  const lookAheadIdx = (idx + 12) % TRACK_SAMPLES;
-  const curv = Math.max(trackCurvature[idx], trackCurvature[lookAheadIdx] * 0.92);
-  const factor = Math.max(0, 1 - curv * 2.35);
-  return 96 + 242 * Math.pow(factor, 1.5);
+  const lookAheadIdx = (idx + 9) % TRACK_SAMPLES;
+  const curv = Math.max(trackCurvature[idx], trackCurvature[lookAheadIdx] * 0.88);
+  // Minimum speed in sharpest hairpins raised to ~182 km/h, sweeping corners ~265-342 km/h
+  const factor = Math.max(0, 1 - curv * 1.35);
+  return 182 + 162 * Math.pow(factor, 1.15);
 }
 
 function createAsphaltTexture() {
@@ -909,7 +1066,6 @@ function buildElevatedTrackAndDecorations() {
   const uvs = [];
   const indices = [];
 
-  // Embankment under elevated track
   const bankGeo = new THREE.BufferGeometry();
   const bankPos = [];
   const bankIdx = [];
@@ -960,10 +1116,9 @@ function buildElevatedTrackAndDecorations() {
   bankGeo.setAttribute('position', new THREE.Float32BufferAttribute(bankPos, 3));
   bankGeo.setIndex(bankIdx);
   bankGeo.computeVertexNormals();
-  const bankMesh = new THREE.Mesh(bankGeo, new THREE.MeshLambertMaterial({ color: 0x223d28 }));
-  scene.add(bankMesh);
+  scene.add(new THREE.Mesh(bankGeo, new THREE.MeshLambertMaterial({ color: 0x223d28 })));
 
-  // 3D Raised Red & White Kerbs on Corners + Guardrails
+  // 3D Raised Kerbs & Guardrails
   const kerbRedMat = new THREE.MeshStandardMaterial({ color: 0xe10600, roughness: 0.5 });
   const kerbWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
   const barrierMat = new THREE.MeshStandardMaterial({ color: 0x8c96a6, metalness: 0.5, roughness: 0.4 });
@@ -977,11 +1132,8 @@ function buildElevatedTrackAndDecorations() {
     const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
     const yaw = Math.atan2(tan.x, tan.z);
 
-    // Add 3D Raised Kerbs where corner curvature is noticeable
-    if (trackCurvature[i] > 0.035) {
-      const isRed = (i / 2) % 2 === 0;
-      const mat = isRed ? kerbRedMat : kerbWhiteMat;
-
+    if (trackCurvature[i] > 0.032) {
+      const mat = ((i / 2) % 2 === 0) ? kerbRedMat : kerbWhiteMat;
       const kL = new THREE.Mesh(kerbBox, mat);
       const posL = pt.clone().addScaledVector(normal, TRACK_WIDTH * 0.5 + 0.5);
       kL.position.set(posL.x, pt.y + 0.12, posL.z);
@@ -995,7 +1147,6 @@ function buildElevatedTrackAndDecorations() {
       scene.add(kR);
     }
 
-    // Add Steel Barriers every 6 steps (skip pit lane area on main straight)
     if (i % 6 === 0 && !(t > 0.96 || t < 0.15)) {
       const rL = new THREE.Mesh(railBox, barrierMat);
       const pL = pt.clone().addScaledVector(normal, TRACK_WIDTH * 0.5 + 4.5);
@@ -1011,26 +1162,26 @@ function buildElevatedTrackAndDecorations() {
     }
   }
 
-  // Sponsor Bridges Across Track
+  // Sponsor Bridges
   [0.085, 0.35, 0.68].forEach((bt, idx) => {
     const pt = mainCurve.getPointAt(bt);
     const tan = mainCurve.getTangentAt(bt);
     const yaw = Math.atan2(tan.x, tan.z);
     const bridgeGroup = new THREE.Group();
     const archMat = new THREE.MeshStandardMaterial({ color: idx === 0 ? 0x111111 : 0xe10600 });
-    const topBeam = new THREE.Mesh(new THREE.BoxGeometry(30, 2.8, 2.2), archMat);
+    const topBeam = new THREE.Mesh(new THREE.BoxGeometry(32, 2.8, 2.2), archMat);
     topBeam.position.y = 8.5;
     const pillarL = new THREE.Mesh(new THREE.BoxGeometry(1.5, 9, 1.5), archMat);
-    pillarL.position.set(14, 4.5, 0);
+    pillarL.position.set(15, 4.5, 0);
     const pillarR = pillarL.clone();
-    pillarR.position.x = -14;
+    pillarR.position.x = -15;
     bridgeGroup.add(topBeam, pillarL, pillarR);
     bridgeGroup.position.copy(pt);
     bridgeGroup.rotation.y = yaw;
     scene.add(bridgeGroup);
   });
 
-  // Pit Lane, Pit Garages & Main Grandstand
+  // Pit Lane & Buildings
   const pitRoad = new THREE.Mesh(
     new THREE.PlaneGeometry(460, 10),
     new THREE.MeshStandardMaterial({ color: 0x1c1d24, roughness: 0.8 })
@@ -1044,17 +1195,16 @@ function buildElevatedTrackAndDecorations() {
     new THREE.MeshStandardMaterial({ color: 0x252836, metalness: 0.4, roughness: 0.4 })
   );
   pitBuilding.position.set(20, 9, 374);
-  pitBuilding.castShadow = true;
   scene.add(pitBuilding);
 
   const grandStand = new THREE.Mesh(
     new THREE.BoxGeometry(420, 26, 30),
     new THREE.MeshStandardMaterial({ color: 0x1c1f2e, roughness: 0.6 })
   );
-  grandStand.position.set(20, 13, 456);
+  grandStand.position.set(20, 13, 458);
   scene.add(grandStand);
 
-  // Suzuka-style Ferris Wheel in Infield
+  // Ferris Wheel
   const wheelGroup = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(42, 1.4, 10, 32),
@@ -1070,26 +1220,104 @@ function buildElevatedTrackAndDecorations() {
   wheelGroup.add(ring, leg1, leg2);
   wheelGroup.position.set(-110, 0, -160);
   scene.add(wheelGroup);
-
-  // Trees around the hills
-  const trunkMat = new THREE.MeshLambertMaterial({ color: 0x4a3219 });
-  const leafMat = new THREE.MeshLambertMaterial({ color: 0x1e4d2b });
-  for (let i = 0; i < 140; i++) {
-    const angle = (i / 140) * Math.PI * 2;
-    const radius = 620 + (i % 5) * 45;
-    const tx = Math.cos(angle) * radius;
-    const tz = Math.sin(angle) * radius * 0.85;
-    const tree = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 5, 6), trunkMat);
-    trunk.position.y = 2.5;
-    const crown = new THREE.Mesh(new THREE.ConeGeometry(5.5, 14, 7), leafMat);
-    crown.position.y = 10;
-    tree.add(trunk, crown);
-    tree.position.set(tx, -3.5, tz);
-    scene.add(tree);
-  }
 }
 buildElevatedTrackAndDecorations();
+
+/* ============================================================================
+   7. 3D PODIUM CEREMONY STAGE & CONFETTI SYSTEM
+============================================================================ */
+const podiumStageGroup = new THREE.Group();
+const podiumFigures = []; // [p1Group, p2Group, p3Group]
+let confettiParticles = null;
+
+function build3DPodiumStage() {
+  // Position on the main straight apron near Start/Finish line (x=55, y=0, z=401)
+  podiumStageGroup.position.set(55, 0.1, 401);
+
+  // Backdrop Board
+  const backWall = new THREE.Mesh(
+    new THREE.BoxGeometry(16, 7.5, 0.6),
+    new THREE.MeshStandardMaterial({ color: 0x12131c, roughness: 0.3 })
+  );
+  backWall.position.set(0, 3.75, -3.2);
+  const redHeader = new THREE.Mesh(
+    new THREE.BoxGeometry(16.2, 1.4, 0.7),
+    new THREE.MeshBasicMaterial({ color: 0xe10600 })
+  );
+  redHeader.position.set(0, 7.0, -3.2);
+  podiumStageGroup.add(backWall, redHeader);
+
+  // P1, P2, P3 Steps
+  const stepConfigs = [
+    { rank: 1, x: 0,    h: 2.6, col: 0xffd700 },
+    { rank: 2, x: -3.6, h: 1.9, col: 0xc0c0c0 },
+    { rank: 3, x: 3.6,  h: 1.4, col: 0xcd7f32 }
+  ];
+
+  stepConfigs.forEach(sc => {
+    const ped = new THREE.Mesh(
+      new THREE.BoxGeometry(3.2, sc.h, 2.8),
+      new THREE.MeshStandardMaterial({ color: 0x222533, roughness: 0.4 })
+    );
+    ped.position.set(sc.x, sc.h / 2, -1.2);
+
+    const topPlate = new THREE.Mesh(
+      new THREE.BoxGeometry(3.25, 0.18, 2.85),
+      new THREE.MeshBasicMaterial({ color: sc.col })
+    );
+    topPlate.position.set(sc.x, sc.h + 0.09, -1.2);
+    podiumStageGroup.add(ped, topPlate);
+
+    // Driver Figure + Trophy standing on step
+    const figGroup = new THREE.Group();
+    const torso = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.32, 0.36, 1.45, 12),
+      new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    torso.position.y = 0.75;
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 12, 12),
+      new THREE.MeshStandardMaterial({ color: 0xffd000 })
+    );
+    head.position.y = 1.68;
+    const trophy = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.08, 0.65, 10),
+      new THREE.MeshBasicMaterial({ color: sc.col })
+    );
+    trophy.position.set(0, 2.25, 0.25);
+
+    figGroup.add(torso, head, trophy);
+    figGroup.position.set(sc.x, sc.h + 0.18, -1.2);
+    podiumStageGroup.add(figGroup);
+    podiumFigures.push({ figGroup, torso, head, baseY: sc.h + 0.18 });
+  });
+
+  // Confetti Particles
+  const cCount = 500;
+  const cGeo = new THREE.BufferGeometry();
+  const cPos = new Float32Array(cCount * 3);
+  const cCol = new Float32Array(cCount * 3);
+  for (let i = 0; i < cCount; i++) {
+    cPos[i * 3] = (Math.random() - 0.5) * 20;
+    cPos[i * 3 + 1] = Math.random() * 14;
+    cPos[i * 3 + 2] = (Math.random() - 0.5) * 14;
+    const isGold = Math.random() > 0.4;
+    cCol[i * 3] = isGold ? 1.0 : 0.9;
+    cCol[i * 3 + 1] = isGold ? 0.84 : 0.1;
+    cCol[i * 3 + 2] = isGold ? 0.0 : 0.1;
+  }
+  cGeo.setAttribute('position', new THREE.BufferAttribute(cPos, 3));
+  cGeo.setAttribute('color', new THREE.BufferAttribute(cCol, 3));
+  confettiParticles = new THREE.Points(
+    cGeo,
+    new THREE.PointsMaterial({ size: 0.28, vertexColors: true })
+  );
+  podiumStageGroup.add(confettiParticles);
+
+  podiumStageGroup.visible = false;
+  scene.add(podiumStageGroup);
+}
+build3DPodiumStage();
 
 // Trackside TV Cameras
 const tvCameraPositions = [];
@@ -1103,8 +1331,8 @@ for (let i = 0; i < 18; i++) {
   tvCameraPositions.push({ t, pos: camPos });
 }
 
-// 3D Rain Particle System
-const RAIN_COUNT = 2500;
+// Rain Particle System
+const RAIN_COUNT = 2200;
 const rainGeo = new THREE.BufferGeometry();
 const rainPositions = new Float32Array(RAIN_COUNT * 3);
 for (let i = 0; i < RAIN_COUNT; i++) {
@@ -1113,13 +1341,15 @@ for (let i = 0; i < RAIN_COUNT; i++) {
   rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 260;
 }
 rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
-const rainMat = new THREE.PointsMaterial({ color: 0xaaccff, size: 0.65, transparent: true, opacity: 0.65 });
-const rainSystem = new THREE.Points(rainGeo, rainMat);
+const rainSystem = new THREE.Points(
+  rainGeo,
+  new THREE.PointsMaterial({ color: 0xaaccff, size: 0.65, transparent: true, opacity: 0.65 })
+);
 rainSystem.visible = false;
 scene.add(rainSystem);
 
 /* ============================================================================
-   6. 3D F1 CAR (FIXED ONBOARD CAMERA MOUNT) & 3D SAFETY CAR MESH
+   8. 3D F1 CAR MESH & SAFETY CAR MESH
 ============================================================================ */
 function getTyreHexColor(compound) {
   if (compound === 'S') return 0xff2800;
@@ -1131,7 +1361,6 @@ function getTyreHexColor(compound) {
 
 function buildF1CarMesh(driver) {
   const group = new THREE.Group();
-
   const bodyMat = new THREE.MeshStandardMaterial({ color: driver.color, metalness: 0.45, roughness: 0.25 });
   const secMat = new THREE.MeshStandardMaterial({ color: driver.sec, metalness: 0.3, roughness: 0.4 });
   const carbonMat = new THREE.MeshStandardMaterial({ color: 0x151519, metalness: 0.2, roughness: 0.7 });
@@ -1177,7 +1406,6 @@ function buildF1CarMesh(driver) {
   ersLight.position.set(0, 0.42, -2.58);
   group.add(ersLight);
 
-  // Crash Smoke Indicator Mesh
   const smokeMesh = new THREE.Mesh(
     new THREE.SphereGeometry(1.6, 8, 8),
     new THREE.MeshBasicMaterial({ color: 0xdddddd, transparent: true, opacity: 0.65 })
@@ -1212,9 +1440,8 @@ function buildF1CarMesh(driver) {
     group.add(wGroup);
   });
 
-  // FIXED ONBOARD CAMERA NODES: Mounted directly inside Car Group so Car never pops out!
   const onboardCamMount = new THREE.Object3D();
-  onboardCamMount.position.set(0, 1.38, 0.55); // Above T-Cam/Halo looking cleanly over nose & front wheels
+  onboardCamMount.position.set(0, 1.38, 0.55);
   const onboardLookTarget = new THREE.Object3D();
   onboardLookTarget.position.set(0, 1.08, 25.0);
   group.add(onboardCamMount, onboardLookTarget);
@@ -1225,7 +1452,6 @@ function buildF1CarMesh(driver) {
   return { group, ersLightMat, tyreRings, smokeMesh, onboardCamMount, onboardLookTarget };
 }
 
-// 3D Safety Car Mesh
 const safetyCarGroup = new THREE.Group();
 (function buildSafetyCar() {
   const scBody = new THREE.Mesh(
@@ -1249,28 +1475,48 @@ const safetyCarGroup = new THREE.Group();
 })();
 
 /* ============================================================================
-   7. INITIALIZE DRIVERS & SIMULATION LOGIC (COLLISIONS, SC/VSC, SPOTLIGHT)
+   9. RANDOMIZED DRIVER STATS, INITIALIZATION & SIMULATION
 ============================================================================ */
 let carMeshes = {};
 
-function selectRandom12Drivers() {
-  return [...ALL_2026_DRIVERS].sort(() => Math.random() - 0.5).slice(0, 12);
+function selectRandom12WithRandomStats() {
+  const chosen = [...ALL_2026_DRIVERS].sort(() => Math.random() - 0.5).slice(0, 12);
+  // Create a balanced but unpredictable pool of skills (Top contenders, Midfield, Slightly slower cars)
+  // Nobody is fixed by name (VER is just as likely to get a midfield or slightly slower stat as anyone else)
+  const skillPool = [
+    1.004, 1.001, 0.998, 0.995, // Front runners (very close!)
+    0.989, 0.986, 0.982, 0.978, // Competitive midfield
+    0.971, 0.966, 0.958, 0.952  // Slightly slower cars, but not extreme
+  ].sort(() => Math.random() - 0.5);
+
+  return chosen.map((d, i) => ({
+    ...d,
+    skill: skillPool[i] + (Math.random() * 0.006 - 0.003),
+    racePaceFactor: 0.992 + Math.random() * 0.018, // Dynamic race pace variance
+    linePreference: (Math.random() - 0.5) * 3.6    // Individual line offset preference
+  }));
 }
 
 function initDriversList(selectedDriversData) {
   Object.values(carMeshes).forEach(m => scene.remove(m.group));
   carMeshes = {};
+  podiumStageGroup.visible = false;
 
   const defaultCompound = gameState.weather.condition === 'DRY' ? 'S' : (gameState.weather.condition === 'LIGHT_RAIN' ? 'I' : 'W');
   gameState.drivers = selectedDriversData.map((d, idx) => {
-    const startT = (START_LINE_T - (idx + 1) * 0.0085 + 1) % 1;
+    const startT = (START_LINE_T - (idx + 1) * 0.025 + 1) % 1;
+    // In FP/Quali, alternate initial flying lap vs out-lap so some cars yield right away
+    const isFlying = idx % 3 !== 2;
     const drvObj = {
       ...d,
+      skill: d.skill || (0.96 + Math.random() * 0.045),
+      racePaceFactor: d.racePaceFactor || 1.0,
+      linePreference: d.linePreference || 0,
       pos: idx + 1,
       gridPos: idx + 1,
       t: startT,
-      laneOffset: (idx % 2 === 0) ? -3.2 : 3.2,
-      targetLane: (idx % 2 === 0) ? -2.5 : 2.5,
+      laneOffset: isFlying ? 0 : 9.2,
+      targetLane: isFlying ? 0 : 9.2,
       speed: 0,
       lap: 0,
       totalDist: startT,
@@ -1282,12 +1528,15 @@ function initDriversList(selectedDriversData) {
       tyreLife: 100,
       ers: 100,
       momActive: false,
+      isFlyingLap: isFlying, // True = Attacking, False = Out-Lap / Cool-Down yielding at track edge
+      yieldingToFastCar: false,
       inPit: false,
       pitStage: 0,
       pitStopTimer: 0,
       lastPitDuration: null,
       crashed: false,
-      finished: false
+      finished: false,
+      finishOrder: 999
     };
     carMeshes[d.code] = buildF1CarMesh(drvObj);
     return drvObj;
@@ -1307,6 +1556,7 @@ function updateTyreVisual(code, compound) {
 }
 
 function showPitPopup(drvName, durationSec, compound) {
+  soundEngine.playPitDing();
   const container = document.getElementById('pit-popup-container');
   const el = document.createElement('div');
   el.className = 'pit-popup';
@@ -1326,9 +1576,9 @@ function setRaceControlState(rcMode) {
   if (rcMode === 'SC') {
     const leader = gameState.drivers[0];
     gameState.scTrackT = leader ? (leader.t + 0.025) % 1 : 0.12;
-    gameState.scTimer = 35; // Auto-green after 35s unless changed
+    gameState.scTimer = 30;
   } else if (rcMode === 'VSC') {
-    gameState.scTimer = 25;
+    gameState.scTimer = 22;
   }
   document.querySelectorAll('.rc-mode-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.rc === rcMode);
@@ -1359,7 +1609,8 @@ function updateSimulation(dt) {
   if (!gameState.drivers.length) return;
   const now = performance.now();
 
-  // Qualifying Timer
+  if (gameState.phase === 'PODIUM') return;
+
   if (gameState.phase === 'QUALIFYING' && isAdmin) {
     gameState.timer -= dt;
     if (gameState.timer <= 0) {
@@ -1368,11 +1619,10 @@ function updateSimulation(dt) {
     }
   }
 
-  // Safety Car / VSC Timer
   if (gameState.raceControl !== 'GREEN') {
     gameState.scTimer -= dt;
     if (gameState.raceControl === 'SC') {
-      const scSpeed = 145;
+      const scSpeed = 155;
       gameState.scTrackT = (gameState.scTrackT + ((scSpeed / 3.6) * dt) / TRACK_LENGTH_METERS) % 1;
     }
     if (gameState.scTimer <= 0 && isAdmin) {
@@ -1380,9 +1630,9 @@ function updateSimulation(dt) {
     }
   }
 
-  // Weather Grip Modifier
   const wCond = gameState.weather.condition;
   const isWetTrack = wCond !== 'DRY';
+  const isPracticeOrQuali = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
 
   gameState.drivers.forEach((drv, i) => {
     if (drv.crashed) {
@@ -1404,10 +1654,10 @@ function updateSimulation(dt) {
       if (distToGrid < 0.015 && drv.totalDist > 0.62) {
         drv.t = targetGridT;
         drv.speed = 0;
-        drv.laneOffset = (drv.gridPos % 2 === 1) ? -3.2 : 3.2;
+        drv.laneOffset = (drv.gridPos % 2 === 1) ? -3.4 : 3.4;
       } else {
-        drv.speed = 140;
-        drv.laneOffset = Math.sin(now * 0.005 + i) * 4.0;
+        drv.speed = 150;
+        drv.laneOffset = Math.sin(now * 0.005 + i) * 5.5;
         const dT = ((drv.speed / 3.6) * dt) / TRACK_LENGTH_METERS;
         drv.t = (drv.t + dT) % 1;
         drv.totalDist += dT;
@@ -1425,7 +1675,7 @@ function updateSimulation(dt) {
         drv.totalDist += dT;
         if (drv.t >= 0.075 && drv.t <= 0.12) {
           drv.pitStage = 2;
-          drv.pitStopTimer = 2.1 + Math.random() * 1.1;
+          drv.pitStopTimer = 2.0 + Math.random() * 1.1;
           drv.lastPitDuration = drv.pitStopTimer;
         }
       } else if (drv.pitStage === 2) {
@@ -1460,26 +1710,52 @@ function updateSimulation(dt) {
         if (drv.t > 0.145) {
           drv.inPit = false;
           drv.pitStage = 0;
+          drv.isFlyingLap = false; // Out-lap after pit stop
         }
       }
       return;
     }
 
-    // Calculate Target Speed
+    // Base Target Speed (Less deceleration in corners!)
     let baseTargetSpeed = getTargetSpeedAt(drv.t);
+    const sampleIdx = Math.floor(((drv.t % 1 + 1) % 1) * TRACK_SAMPLES);
+    const idealLine = idealRacingLine[sampleIdx];
 
-    // Tyre & Weather Matching
+    // Check FP / Qualifying Non-Timed Lap (Out-Lap / Cool-Down) or Finished Post-Race Lap
+    drv.yieldingToFastCar = false;
+    if ((isPracticeOrQuali && !drv.isFlyingLap) || drv.finished) {
+      // Slow down & pull over to the far edge of the circuit opposite to the racing line!
+      baseTargetSpeed = Math.min(baseTargetSpeed * 0.62, 165);
+      const safeEdge = idealLine > 0 ? -9.5 : 9.5;
+      drv.targetLane = safeEdge;
+
+      // Check if an attacking car is approaching from behind to yield even more strictly
+      gameState.drivers.forEach(other => {
+        if (other.code === drv.code || !other.isFlyingLap || other.inPit || other.crashed) return;
+        const behindDistT = (drv.t - other.t + 1) % 1;
+        if (behindDistT > 0 && behindDistT < 0.045) {
+          drv.yieldingToFastCar = true;
+          baseTargetSpeed = 140;
+          drv.targetLane = other.laneOffset > 0 ? -9.8 : 9.8;
+        }
+      });
+    } else {
+      // Active Flying Lap or Race Lap: Use full track width Out-In-Out racing line + driver preference
+      drv.targetLane = Math.max(-9.5, Math.min(9.5, idealLine + drv.linePreference * 0.45));
+    }
+
+    // Tyre & Weather Grip
     let tyreGrip = 1.0;
     if (wCond === 'DRY') {
-      tyreGrip = drv.tyre === 'S' ? 1.035 : (drv.tyre === 'M' ? 1.0 : (drv.tyre === 'H' ? 0.975 : 0.86));
+      tyreGrip = drv.tyre === 'S' ? 1.03 : (drv.tyre === 'M' ? 1.0 : (drv.tyre === 'H' ? 0.98 : 0.86));
     } else if (wCond === 'LIGHT_RAIN') {
-      tyreGrip = drv.tyre === 'I' ? 0.94 : (drv.tyre === 'W' ? 0.90 : 0.76);
+      tyreGrip = drv.tyre === 'I' ? 0.95 : (drv.tyre === 'W' ? 0.91 : 0.78);
     } else {
-      tyreGrip = drv.tyre === 'W' ? 0.88 : (drv.tyre === 'I' ? 0.81 : 0.66);
+      tyreGrip = drv.tyre === 'W' ? 0.90 : (drv.tyre === 'I' ? 0.83 : 0.68);
     }
-    const wearPenalty = 1.0 - ((100 - drv.tyreLife) * 0.0012);
+    const wearPenalty = 1.0 - ((100 - drv.tyreLife) * 0.001);
 
-    // Find Car Ahead
+    // Find Car Ahead for Slipstream & Wide-Track Overtaking
     let carAhead = null;
     let minGapT = 1.0;
     gameState.drivers.forEach(other => {
@@ -1491,41 +1767,53 @@ function updateSimulation(dt) {
       }
     });
 
-    // OVERTAKE MODE (MOM): Strictly ONLY allowed in RACE and GREEN flag!
     drv.momActive = false;
-    if (gameState.phase === 'RACE' && gameState.raceControl === 'GREEN' && !drv.finished) {
-      if (carAhead && minGapT < 0.028 && drv.ers > 18 && baseTargetSpeed > 215) {
-        drv.momActive = true;
-        drv.ers = Math.max(0, drv.ers - dt * 16);
-        baseTargetSpeed += 23;
-        if (Math.abs(carAhead.laneOffset - drv.laneOffset) < 2.5) {
-          drv.targetLane = carAhead.laneOffset > 0 ? -4.2 : 4.2;
+    // Slipstream & Multi-Lane Overtaking Logic
+    if (carAhead && minGapT < 0.036 && (!isPracticeOrQuali || drv.isFlyingLap) && !drv.finished) {
+      // Slipstream tow boost on straights and fast bends
+      baseTargetSpeed += 14;
+
+      // Pick wide overtaking lane (left or right side of the car ahead using the full 24m track width)
+      if (Math.abs(carAhead.laneOffset - drv.laneOffset) < 3.4) {
+        const roomLeft = 9.6 - carAhead.laneOffset;
+        const roomRight = carAhead.laneOffset - (-9.6);
+        if (roomLeft > roomRight) {
+          drv.targetLane = Math.min(9.5, carAhead.laneOffset + 4.8);
+        } else {
+          drv.targetLane = Math.max(-9.5, carAhead.laneOffset - 4.8);
         }
       }
+
+      // OVERTAKE MODE (MOM): Strictly in RACE + GREEN flag
+      if (gameState.phase === 'RACE' && gameState.raceControl === 'GREEN' && drv.ers > 15 && baseTargetSpeed > 210) {
+        drv.momActive = true;
+        drv.ers = Math.max(0, drv.ers - dt * 15);
+        baseTargetSpeed += 22;
+      }
+    } else if (!drv.momActive) {
+      if (baseTargetSpeed < 220) drv.ers = Math.min(100, drv.ers + dt * 15);
     }
 
-    if (!drv.momActive) {
-      if (baseTargetSpeed < 175) drv.ers = Math.min(100, drv.ers + dt * 14);
-      const idx = Math.floor(drv.t * TRACK_SAMPLES);
-      drv.targetLane = Math.sin(idx * 0.04 + i * 0.3) * 3.4;
-    }
-
-    // Safety Car / VSC Speed Cap & No Overtaking
+    // Safety Car / VSC Speed Cap
     if (gameState.raceControl === 'VSC') {
-      baseTargetSpeed = Math.min(baseTargetSpeed, 155);
-      drv.targetLane = (drv.pos % 2 === 0) ? 2.2 : -2.2;
+      baseTargetSpeed = Math.min(baseTargetSpeed, 160);
     } else if (gameState.raceControl === 'SC') {
-      baseTargetSpeed = Math.min(baseTargetSpeed, 145);
+      baseTargetSpeed = Math.min(baseTargetSpeed, 150);
       drv.targetLane = 0;
       if (carAhead && minGapT < 0.012) {
         baseTargetSpeed = Math.min(baseTargetSpeed, carAhead.speed * 0.95);
       }
     }
 
-    drv.laneOffset += (drv.targetLane - drv.laneOffset) * Math.min(1, dt * 3.5);
+    // Responsive Lateral Steering across full width
+    drv.laneOffset += (drv.targetLane - drv.laneOffset) * Math.min(1, dt * 4.5);
 
-    const desiredSpeed = baseTargetSpeed * drv.skill * tyreGrip * wearPenalty * (0.985 + Math.sin(now * 0.002 + i) * 0.02);
-    const accelRate = desiredSpeed > drv.speed ? 95 : 220;
+    // Dynamic form fluctuation so the race remains unpredictable until the final lap
+    const dynamicWave = 0.986 + Math.sin(now * 0.0012 + i * 1.7) * 0.024;
+    const effectiveSkill = drv.skill * (gameState.phase === 'RACE' ? drv.racePaceFactor : 1.0);
+    const desiredSpeed = baseTargetSpeed * effectiveSkill * tyreGrip * wearPenalty * dynamicWave;
+
+    const accelRate = desiredSpeed > drv.speed ? 110 : 210;
     if (drv.speed < desiredSpeed) {
       drv.speed = Math.min(desiredSpeed, drv.speed + accelRate * dt);
     } else {
@@ -1537,81 +1825,97 @@ function updateSimulation(dt) {
     drv.t = (drv.t + dT) % 1;
     drv.totalDist += dT;
 
-    // Degrade Tyres
-    const degRate = drv.tyre === 'S' ? 2.5 : 1.6;
-    drv.tyreLife = Math.max(5, drv.tyreLife - dT * 12 * degRate);
+    const degRate = drv.tyre === 'S' ? 2.4 : 1.5;
+    drv.tyreLife = Math.max(5, drv.tyreLife - dT * 11 * degRate);
 
-    // Pit Entry Decision (Tyre worn OR wrong tyre for rain/dry)
+    // Pit Entry Decision
     const wrongTyreForWeather =
       (isWetTrack && drv.tyre !== 'I' && drv.tyre !== 'W') ||
       (!isWetTrack && (drv.tyre === 'I' || drv.tyre === 'W'));
 
     if ((gameState.phase === 'RACE' || gameState.phase === 'FREE_PRACTICE') && !drv.finished) {
-      if ((drv.tyreLife < 42 || wrongTyreForWeather) && drv.t > 0.96 && drv.t < 0.99 && drv.lap < TOTAL_RACE_LAPS) {
+      if ((drv.tyreLife < 40 || wrongTyreForWeather) && drv.t > 0.96 && drv.t < 0.99 && drv.lap < gameState.totalRaceLaps) {
         drv.inPit = true;
         drv.pitStage = 1;
       }
     }
 
-    // Finish Line Crossing
+    // Start / Finish Line Crossing
     if (prevT < START_LINE_T && drv.t >= START_LINE_T) {
       const rawLapSec = (now - drv.currentLapStart) / 1000;
       drv.currentLapStart = now;
-      if (rawLapSec > 15 && rawLapSec < 180) {
-        const weatherPenalty = wCond === 'DRY' ? 0 : (wCond === 'LIGHT_RAIN' ? 4.5 : 9.2);
-        const simTime = 77.2 + weatherPenalty + (1 - drv.skill) * 16 + Math.random() * 0.75 - (drv.tyre === 'S' ? 0.5 : 0);
-        drv.lastLapTime = simTime;
-        if (!drv.bestLapTime || simTime < drv.bestLapTime) {
-          drv.bestLapTime = simTime;
+
+      if (isPracticeOrQuali) {
+        if (drv.isFlyingLap && rawLapSec > 12 && rawLapSec < 180) {
+          const weatherPenalty = wCond === 'DRY' ? 0 : (wCond === 'LIGHT_RAIN' ? 4.2 : 8.5);
+          const simTime = 73.5 + weatherPenalty + (1 - drv.skill) * 14 + Math.random() * 0.95 - (drv.tyre === 'S' ? 0.45 : 0);
+          drv.lastLapTime = simTime;
+          if (!drv.bestLapTime || simTime < drv.bestLapTime) {
+            drv.bestLapTime = simTime;
+          }
+          if (flyingSpotlight.code === drv.code && flyingSpotlight.status === 'RUNNING') {
+            const bestOverall = Math.min(...gameState.drivers.map(d => d.bestLapTime || 999));
+            flyingSpotlight.finalTime = simTime;
+            flyingSpotlight.deltaToP1 = simTime - bestOverall;
+            flyingSpotlight.status = 'HOLD';
+            flyingSpotlight.holdTimer = 2.8;
+          }
+          // After completing a flying lap, switch to a cool-down / recharging lap (yielding at edge)
+          drv.isFlyingLap = Math.random() < 0.35;
+        } else {
+          // Completed out-lap / cool-down lap -> start flying attack lap!
+          drv.isFlyingLap = true;
         }
-        // Check if this driver is currently the Flying Lap Spotlight driver
-        if (flyingSpotlight.code === drv.code && flyingSpotlight.status === 'RUNNING') {
-          const bestOverall = Math.min(...gameState.drivers.map(d => d.bestLapTime || 999));
-          flyingSpotlight.finalTime = simTime;
-          flyingSpotlight.deltaToP1 = simTime - bestOverall;
-          flyingSpotlight.status = 'HOLD';
-          flyingSpotlight.holdTimer = 3.0;
-        }
-      }
-      if (gameState.phase === 'RACE') {
+        forceTimingTowerRefresh();
+      } else if (gameState.phase === 'RACE' && !drv.finished) {
         drv.lap += 1;
-        if (drv.lap > TOTAL_RACE_LAPS && !drv.finished) {
+        // Re-randomize racePaceFactor slightly each lap for exciting multi-car battles!
+        drv.racePaceFactor = 0.988 + Math.random() * 0.026;
+
+        if (drv.lap > gameState.totalRaceLaps) {
           drv.finished = true;
+          gameState.finishedCounter += 1;
+          drv.finishOrder = gameState.finishedCounter;
+          soundEngine.playTone(1046.5, 0.25, 'triangle', 0.12);
           forceTimingTowerRefresh();
-          checkRaceCompletion();
+          checkAllDriversFinished();
         }
       }
     }
   });
 
-  // CAR-TO-CAR COLLISION DETECTION & CRASH LOGIC
-  if (gameState.raceControl === 'GREEN' && (gameState.phase === 'RACE' || gameState.phase === 'QUALIFYING' || gameState.phase === 'FREE_PRACTICE')) {
-    const activeCars = gameState.drivers.filter(d => !d.inPit && !d.crashed && !d.finished && d.speed > 90);
+  // CAR-TO-CAR COLLISION DETECTION (Only in Race or between attacking cars)
+  if (gameState.raceControl === 'GREEN' && (gameState.phase === 'RACE' || isPracticeOrQuali)) {
+    const activeCars = gameState.drivers.filter(d => !d.inPit && !d.crashed && !d.finished && d.speed > 100);
     for (let a = 0; a < activeCars.length; a++) {
       for (let b = a + 1; b < activeCars.length; b++) {
         const c1 = activeCars[a];
         const c2 = activeCars[b];
+        // Non-attacking yielding cars in FP/Quali ghost cleanly if at track edge
+        if (isPracticeOrQuali && (!c1.isFlyingLap || !c2.isFlyingLap)) continue;
+
         let diffT = Math.abs(c1.t - c2.t);
         if (diffT > 0.5) diffT = 1 - diffT;
         const distMeters = diffT * TRACK_LENGTH_METERS;
         const latMeters = Math.abs(c1.laneOffset - c2.laneOffset);
 
-        if (distMeters < 3.6 && latMeters < 1.35) {
-          // Physical wheel-to-wheel contact!
-          const push = c1.laneOffset > c2.laneOffset ? 1.2 : -1.2;
+        if (distMeters < 3.4 && latMeters < 1.3) {
+          const push = c1.laneOffset > c2.laneOffset ? 1.1 : -1.1;
           c1.laneOffset += push;
           c2.laneOffset -= push;
 
-          // Small probability of terminal crash on hard contact in corners
           const idx = Math.floor(c1.t * TRACK_SAMPLES);
-          if (trackCurvature[idx] > 0.045 && Math.random() < 0.022) {
+          if (trackCurvature[idx] > 0.048 && Math.random() < 0.015) {
             const victim = Math.random() < 0.5 ? c1 : c2;
             victim.crashed = true;
             victim.speed = 0;
-            victim.laneOffset = victim.laneOffset > 0 ? 8.2 : -8.2;
+            victim.laneOffset = victim.laneOffset > 0 ? 9.8 : -9.8;
             forceTimingTowerRefresh();
-            if (gameState.phase === 'RACE' && isAdmin) {
-              setRaceControlState(Math.random() < 0.55 ? 'SC' : 'VSC');
+            if (gameState.phase === 'RACE') {
+              checkAllDriversFinished();
+              if (isAdmin && gameState.phase === 'RACE') {
+                setRaceControlState(Math.random() < 0.55 ? 'SC' : 'VSC');
+              }
             }
           }
         }
@@ -1619,11 +1923,33 @@ function updateSimulation(dt) {
     }
   }
 
-  // Sort Driver Standings (Crashed cars drop to bottom in Race)
-  if (gameState.phase === 'QUALIFYING' || gameState.phase === 'FREE_PRACTICE') {
-    gameState.drivers.sort((a, b) => (a.bestLapTime || 999) - (b.bestLapTime || 999));
-  } else if (gameState.phase === 'RACE') {
+  // Sort Standings: FP/Quali = Best Time Order, Race = Real-time Race Position (Finished locked at top, Crashed at bottom)
+  sortDriversByCurrentStandings();
+
+  if (gameState.phase === 'RACE') {
+    const maxL = Math.max(...gameState.drivers.map(d => Math.min(gameState.totalRaceLaps, d.lap)));
+    gameState.raceLap = Math.max(1, maxL);
+  }
+
+  updateFlyingLapSpotlight(dt);
+}
+
+function sortDriversByCurrentStandings() {
+  const isPracticeOrQuali = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
+  if (isPracticeOrQuali) {
     gameState.drivers.sort((a, b) => {
+      const tA = a.bestLapTime || 9999;
+      const tB = b.bestLapTime || 9999;
+      if (tA !== tB) return tA - tB;
+      return b.totalDist - a.totalDist;
+    });
+  } else if (gameState.phase === 'BETTING' || gameState.phase === 'FORMATION_LAP' || gameState.phase === 'FIVE_LIGHTS') {
+    gameState.drivers.sort((a, b) => a.gridPos - b.gridPos);
+  } else {
+    // RACE or PODIUM: Real-time race order (Finished order locked -> Active totalDist -> Crashed)
+    gameState.drivers.sort((a, b) => {
+      if (a.finished && b.finished) return a.finishOrder - b.finishOrder;
+      if (a.finished !== b.finished) return a.finished ? -1 : 1;
       if (a.crashed !== b.crashed) return a.crashed ? 1 : -1;
       return b.totalDist - a.totalDist;
     });
@@ -1632,33 +1958,29 @@ function updateSimulation(dt) {
   const leaderDist = gameState.drivers[0]?.totalDist || 0;
   gameState.drivers.forEach((d, idx) => {
     d.pos = idx + 1;
-    d.gapToLeader = Math.max(0, (leaderDist - d.totalDist) * 82.0);
+    d.gapToLeader = Math.max(0, (leaderDist - d.totalDist) * 76.0);
   });
-
-  if (gameState.phase === 'RACE') {
-    const maxL = Math.max(...gameState.drivers.map(d => d.lap));
-    gameState.raceLap = Math.min(TOTAL_RACE_LAPS, Math.max(1, maxL));
-  }
-
-  updateFlyingLapSpotlight(dt, now);
 }
 
 /* ============================================================================
-   8. FLYING LAP SPOTLIGHT LOGIC (CLOSEST TO FINISH LINE -> DELTA -> NEXT)
+   10. FLYING LAP SPOTLIGHT LOGIC (Respects Admin Show/Hide Toggle)
 ============================================================================ */
-function updateFlyingLapSpotlight(dt, now) {
+function updateFlyingLapSpotlight(dt) {
   const box = document.getElementById('flying-lap-box');
-  if (gameState.phase !== 'FREE_PRACTICE' && gameState.phase !== 'QUALIFYING') {
+  const isPracticeOrQuali = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
+
+  if (!isPracticeOrQuali || !gameState.broadcast.showFlyingLap) {
     box.style.display = 'none';
-    flyingSpotlight.status = 'SEARCHING';
+    if (!isPracticeOrQuali) flyingSpotlight.status = 'SEARCHING';
     return;
   }
 
   if (flyingSpotlight.status === 'HOLD') {
+    box.style.display = 'block';
     flyingSpotlight.holdTimer -= dt;
     if (flyingSpotlight.holdTimer <= 0) {
       flyingSpotlight.status = 'COOLDOWN';
-      flyingSpotlight.holdTimer = 0.8;
+      flyingSpotlight.holdTimer = 0.7;
       box.style.display = 'none';
     }
     return;
@@ -1673,13 +1995,13 @@ function updateFlyingLapSpotlight(dt, now) {
   }
 
   if (flyingSpotlight.status === 'SEARCHING') {
-    // Pick active driver on track closest to START_LINE_T
+    // Pick attacking driver (`isFlyingLap === true`) closest to Finish Line
     let bestCandidate = null;
     let minRemainingT = 1.0;
     gameState.drivers.forEach(d => {
-      if (d.inPit || d.crashed || d.speed < 60) return;
+      if (d.inPit || d.crashed || !d.isFlyingLap || d.speed < 80) return;
       const remT = (START_LINE_T - d.t + 1) % 1;
-      if (remT > 0.03 && remT < 0.55 && remT < minRemainingT) {
+      if (remT > 0.02 && remT < 0.65 && remT < minRemainingT) {
         minRemainingT = remT;
         bestCandidate = d;
       }
@@ -1695,7 +2017,7 @@ function updateFlyingLapSpotlight(dt, now) {
 
   if (flyingSpotlight.status === 'RUNNING') {
     const drv = gameState.drivers.find(d => d.code === flyingSpotlight.code);
-    if (!drv || drv.inPit || drv.crashed) {
+    if (!drv || drv.inPit || drv.crashed || !drv.isFlyingLap) {
       flyingSpotlight.status = 'SEARCHING';
       box.style.display = 'none';
       return;
@@ -1703,18 +2025,68 @@ function updateFlyingLapSpotlight(dt, now) {
     box.style.display = 'block';
     const remT = (START_LINE_T - drv.t + 1) % 1;
     const progress = 1 - remT;
-    const liveLapSec = Math.max(0, progress * 78.2);
+    const liveLapSec = Math.max(0, progress * 74.2);
     document.getElementById('fl-drv-label').textContent = `#${drv.num} ${drv.code}`;
     document.getElementById('fl-time-label').textContent = formatLapTime(liveLapSec);
-    document.getElementById('fl-delta-label').textContent = 'FLYING LAP...';
+    document.getElementById('fl-delta-label').textContent = 'FLYING LAP ATTACK...';
     document.getElementById('fl-delta-label').style.color = '#aaa';
   }
 }
 
 /* ============================================================================
-   9. 3D MESH TRANSFORMS & FIXED ONBOARD CAMERA RENDERING
+   11. 3D MESH TRANSFORMS, PODIUM CEREMONY & RENDERING
 ============================================================================ */
 function syncCarMeshesTo3D() {
+  const now = performance.now();
+
+  if (gameState.phase === 'PODIUM') {
+    podiumStageGroup.visible = true;
+    // Animate Podium Figures & Confetti
+    const top3 = gameState.drivers.slice(0, 3);
+    podiumFigures.forEach((pf, idx) => {
+      const drv = top3[idx];
+      if (drv) {
+        pf.torso.material.color.setStyle(drv.color);
+        pf.head.material.color.setStyle(drv.sec);
+        pf.figGroup.position.y = pf.baseY + Math.abs(Math.sin(now * 0.005 + idx)) * 0.25;
+      }
+    });
+
+    if (confettiParticles) {
+      const posAttr = confettiParticles.geometry.attributes.position;
+      for (let i = 0; i < posAttr.count; i++) {
+        let y = posAttr.getY(i) - 0.08;
+        if (y < 0) y = 14;
+        posAttr.setY(i, y);
+      }
+      posAttr.needsUpdate = true;
+    }
+
+    // Park Top 3 F1 Cars proudly in front of the Podium Stage
+    const podiumCarOffsets = [
+      { x: 55, z: 406.5, yaw: Math.PI * 0.85 },
+      { x: 49, z: 407.5, yaw: Math.PI * 0.75 },
+      { x: 61, z: 407.5, yaw: Math.PI * 0.95 }
+    ];
+    gameState.drivers.forEach((drv, idx) => {
+      const m = carMeshes[drv.code];
+      if (!m) return;
+      if (idx < 3) {
+        const spot = podiumCarOffsets[idx];
+        m.group.position.set(spot.x, 0.12, spot.z);
+        m.group.rotation.set(0, spot.yaw, 0);
+      } else {
+        // Park remaining cars neatly in pit lane
+        m.group.position.set(-120 + idx * 14, 0.08, 395);
+        m.group.rotation.set(0, Math.PI / 2, 0);
+      }
+      m.group.updateMatrixWorld(true);
+    });
+    return;
+  }
+
+  podiumStageGroup.visible = false;
+
   gameState.drivers.forEach(drv => {
     const m = carMeshes[drv.code];
     if (!m) return;
@@ -1733,17 +2105,15 @@ function syncCarMeshesTo3D() {
       const worldPos = pt.clone().addScaledVector(normal, drv.laneOffset);
       m.group.position.set(worldPos.x, worldPos.y + 0.08, worldPos.z);
 
-      // Smooth 3D orientation including pitch on hills
       const lookPt = mainCurve.getPointAt((tNorm + 0.004) % 1).addScaledVector(normal, drv.laneOffset);
       m.group.lookAt(lookPt.x, lookPt.y + 0.08, lookPt.z);
     }
 
     m.smokeMesh.visible = Boolean(drv.crashed);
-    m.ersLightMat.color.setHex(drv.momActive && (performance.now() % 200 < 100) ? 0xb138ff : 0xff0000);
+    m.ersLightMat.color.setHex(drv.momActive && (now % 200 < 100) ? 0xb138ff : 0xff0000);
     m.group.updateMatrixWorld(true);
   });
 
-  // Safety Car 3D Position
   if (gameState.raceControl === 'SC') {
     safetyCarGroup.visible = true;
     const scPt = mainCurve.getPointAt(gameState.scTrackT % 1);
@@ -1754,7 +2124,6 @@ function syncCarMeshesTo3D() {
     safetyCarGroup.visible = false;
   }
 
-  // Rain Visuals & Wet Track Reflections
   const wCond = gameState.weather.condition;
   if (wCond === 'DRY') {
     rainSystem.visible = false;
@@ -1775,12 +2144,18 @@ function syncCarMeshesTo3D() {
 }
 
 function positionCameraForDriver(camera, drv, mode) {
+  if (gameState.phase === 'PODIUM' || mode === 'podium') {
+    const tNow = performance.now() * 0.0004;
+    camera.position.set(55 + Math.sin(tNow) * 6.5, 4.2, 415.5 + Math.cos(tNow) * 2.0);
+    camera.lookAt(55, 3.2, 400);
+    return;
+  }
+
   if (!drv || !carMeshes[drv.code]) return;
   const m = carMeshes[drv.code];
   const carPos = m.group.position;
 
   if (mode === 'onboard') {
-    // Read exact world position of the car's internal T-Cam mount
     const camWorldPos = new THREE.Vector3();
     const lookWorldPos = new THREE.Vector3();
     m.onboardCamMount.getWorldPosition(camWorldPos);
@@ -1800,7 +2175,6 @@ function positionCameraForDriver(camera, drv, mode) {
     camera.position.lerp(camPos, 0.08);
     camera.lookAt(carPos);
   } else {
-    // TV Trackside Camera
     let nearest = tvCameraPositions[0];
     let minD = 9999999;
     tvCameraPositions.forEach(tc => {
@@ -1824,10 +2198,8 @@ function renderScene() {
   const worldTargetDrv = gameState.drivers.find(d => d.code === gameState.broadcast.targetCode) || gameState.drivers[0];
   const userOnboardDrv = gameState.drivers.find(d => d.code === userViewConfig.onboardCode) || gameState.drivers[0];
 
-  // Keep rain centered around main camera
   rainSystem.position.set(worldCamera.position.x, 0, worldCamera.position.z);
 
-  // Admin 12-Car All-Onboard Grid
   if (isAdmin && userViewConfig.adminGrid12 && gameState.drivers.length === 12) {
     pipFrame.style.display = 'none';
     const cols = 4, rows = 3;
@@ -1848,7 +2220,7 @@ function renderScene() {
     return;
   }
 
-  if (isAdmin || userViewConfig.layout === 'world') {
+  if (isAdmin || userViewConfig.layout === 'world' || gameState.phase === 'PODIUM') {
     pipFrame.style.display = 'none';
     renderer.setViewport(0, 0, W, H);
     renderer.setScissor(0, 0, W, H);
@@ -1865,7 +2237,6 @@ function renderScene() {
     positionCameraForDriver(pipCamera, userOnboardDrv, 'onboard');
     renderer.render(scene, pipCamera);
   } else {
-    // Dual View: World + Onboard PiP
     renderer.setViewport(0, 0, W, H);
     renderer.setScissor(0, 0, W, H);
     worldCamera.aspect = W / H;
@@ -1890,12 +2261,12 @@ function renderScene() {
 }
 
 /* ============================================================================
-   10. 5-SECOND TIMING TOWER SNAPSHOT & UI UPDATES
+   12. LIVE TIMING TOWER (Current Time Order / Real-time Race Order)
 ============================================================================ */
 function buildTimingTowerHTML() {
+  sortDriversByCurrentStandings();
   const isPracticeOrQuali = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
-  // Ensure strict top-to-bottom sorting by current position (1 to 12)
-  const sorted = [...gameState.drivers].sort((a, b) => a.pos - b.pos);
+  const sorted = gameState.drivers;
   const leaderBest = sorted[0]?.bestLapTime || null;
 
   return sorted.map((drv, idx) => {
@@ -1905,17 +2276,19 @@ function buildTimingTowerHTML() {
     } else if (gameState.broadcast.showTimes || isAdmin) {
       if (isPracticeOrQuali) {
         if (!drv.bestLapTime) {
-          timeStr = 'NO TIME';
+          timeStr = drv.isFlyingLap ? 'FLYING' : 'OUT LAP';
         } else if (idx === 0) {
-          // 1st place shows full lap time
           timeStr = formatLapTime(drv.bestLapTime);
         } else {
-          // 2nd place onwards shows +0.xxx gap to P1
           const diff = Math.max(0, drv.bestLapTime - (leaderBest || drv.bestLapTime));
           timeStr = `+${diff.toFixed(3)}`;
         }
       } else {
-        timeStr = idx === 0 ? 'LEADER' : `+${drv.gapToLeader.toFixed(1)}s`;
+        if (drv.finished) {
+          timeStr = idx === 0 ? 'WINNER' : `+${drv.gapToLeader.toFixed(1)}s`;
+        } else {
+          timeStr = idx === 0 ? 'LEADER' : `+${drv.gapToLeader.toFixed(1)}s`;
+        }
       }
     }
 
@@ -1923,6 +2296,9 @@ function buildTimingTowerHTML() {
       ? `<span class="tyre-icon tyre-${drv.tyre}">${drv.tyre}</span>`
       : '';
     const pitHtml = drv.inPit ? `<span class="badge-mini badge-pit">PIT</span>` : '';
+    const yieldHtml = (isPracticeOrQuali && !drv.isFlyingLap && !drv.inPit && !drv.crashed)
+      ? `<span class="badge-mini badge-yield" title="非計測・道譲り走行中">SLOW</span>`
+      : '';
     const flagHtml = drv.finished ? ' 🏁' : '';
     const isFocused = drv.code === gameState.broadcast.targetCode;
 
@@ -1932,6 +2308,7 @@ function buildTimingTowerHTML() {
         <span class="team-stripe" style="background:${drv.color}"></span>
         <span class="drv-code">${drv.code}${flagHtml}<span class="mom-dot ${drv.momActive ? 'active' : ''}"></span></span>
         <span class="drv-gap">${timeStr}</span>
+        ${yieldHtml}
         ${pitHtml}
         ${tyreHtml}
       </div>
@@ -1984,12 +2361,12 @@ function drawGpsMap() {
 function updateUI() {
   const now = performance.now();
 
-  // 1. Update Timing Tower strictly every 5 seconds
+  // Keep positions sorted in real-time and update tower every 5 seconds
+  sortDriversByCurrentStandings();
   if (now - lastTowerSnapshotTime >= 5000 || !towerSnapshotHTML) {
     forceTimingTowerRefresh();
   }
 
-  // 2. Session & Lap Labels (Formation Lap = LAP 0)
   const phaseNames = {
     FREE_PRACTICE: 'FREE PRACTICE',
     QUALIFYING: 'QUALIFYING',
@@ -1997,7 +2374,7 @@ function updateUI() {
     FORMATION_LAP: 'FORMATION LAP (LAP 0)',
     FIVE_LIGHTS: 'STARTING GRID',
     RACE: 'GRAND PRIX RACE',
-    FINISHED: 'CHECKERED FLAG 🏁'
+    PODIUM: '🏆 PODIUM CEREMONY'
   };
   const labelText = phaseNames[gameState.phase] || gameState.phase;
   document.getElementById('admin-header-session').textContent = labelText;
@@ -2009,16 +2386,17 @@ function updateUI() {
     const s = Math.floor(gameState.timer % 60);
     lapStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   } else if (gameState.phase === 'FORMATION_LAP') {
-    lapStr = `LAP 0/${TOTAL_RACE_LAPS}`;
-  } else if (gameState.phase === 'RACE' || gameState.phase === 'FINISHED') {
-    lapStr = `LAP ${gameState.raceLap}/${TOTAL_RACE_LAPS}`;
+    lapStr = `LAP 0/${gameState.totalRaceLaps}`;
+  } else if (gameState.phase === 'RACE') {
+    lapStr = `LAP ${gameState.raceLap}/${gameState.totalRaceLaps}`;
+  } else if (gameState.phase === 'PODIUM') {
+    lapStr = `FIN (${gameState.totalRaceLaps} LAPS)`;
   }
 
   document.getElementById('admin-header-timer').textContent = lapStr;
   document.getElementById('viewer-compact-session').textContent = `${labelText} (${lapStr})`;
   document.getElementById('tower-lap-counter').textContent = lapStr;
 
-  // 3. Tower Visibility
   const towerEl = document.getElementById('timing-tower');
   if (!gameState.broadcast.showTower && !isAdmin) {
     towerEl.classList.add('hidden-tower');
@@ -2026,7 +2404,6 @@ function updateUI() {
     towerEl.classList.remove('hidden-tower');
   }
 
-  // 4. Weather Widget (Bottom Left)
   const weatherEl = document.getElementById('weather-widget');
   weatherEl.style.display = gameState.broadcast.showWeather ? 'block' : 'none';
   const wCondMap = { DRY: 'DRY ☀️', LIGHT_RAIN: 'INTER 🌧️', HEAVY_RAIN: 'WET ⛈️' };
@@ -2036,16 +2413,24 @@ function updateUI() {
   document.getElementById('w-rain-pct').textContent = `${gameState.weather.rainPct}%`;
   document.getElementById('w-wind').textContent = `${gameState.weather.wind} m/s`;
 
-  // 5. Safety Car / VSC Banner
   const rcBanner = document.getElementById('race-control-banner');
   const gpsRc = document.getElementById('gps-rc-status');
-  if (gameState.raceControl === 'SC') {
+  if (gameState.phase === 'PODIUM') {
     rcBanner.style.display = 'block';
+    rcBanner.style.background = 'var(--f1-red)';
+    rcBanner.style.color = '#fff';
+    rcBanner.textContent = `🏆 PODIUM CEREMONY - WINNER: ${gameState.drivers[0]?.name || ''}`;
+  } else if (gameState.raceControl === 'SC') {
+    rcBanner.style.display = 'block';
+    rcBanner.style.background = 'var(--f1-yellow)';
+    rcBanner.style.color = '#000';
     rcBanner.textContent = '🚓 SAFETY CAR DEPLOYED';
     gpsRc.textContent = 'SC';
     gpsRc.style.color = 'var(--f1-yellow)';
   } else if (gameState.raceControl === 'VSC') {
     rcBanner.style.display = 'block';
+    rcBanner.style.background = 'var(--f1-yellow)';
+    rcBanner.style.color = '#000';
     rcBanner.textContent = '⚠️ VIRTUAL SAFETY CAR';
     gpsRc.textContent = 'VSC';
     gpsRc.style.color = 'var(--f1-yellow)';
@@ -2055,7 +2440,6 @@ function updateUI() {
     gpsRc.style.color = 'var(--f1-green)';
   }
 
-  // 6. Focused Driver Banner (Name / Current Position / Telemetry)
   const hudEl = document.getElementById('telemetry-hud');
   hudEl.style.display = gameState.broadcast.showBanner ? 'flex' : 'none';
   const hudDrv = (!isAdmin && userViewConfig.layout === 'onboard')
@@ -2079,10 +2463,11 @@ function updateUI() {
       momEl.style.background = '#222';
       momEl.style.color = '#777';
     }
+    // Update Web Audio Engine pitch based on focused car speed
+    soundEngine.updateEngine(hudDrv.speed, gameState.phase);
   }
 
-  // 7. Flying Lap Spotlight Hold Display
-  if (flyingSpotlight.status === 'HOLD') {
+  if (flyingSpotlight.status === 'HOLD' && gameState.broadcast.showFlyingLap) {
     const drv = gameState.drivers.find(d => d.code === flyingSpotlight.code);
     if (drv) {
       document.getElementById('fl-drv-label').textContent = `#${drv.num} ${drv.code}`;
@@ -2099,15 +2484,18 @@ function updateUI() {
     }
   }
 
-  // 8. Admin Studio Right Telemetry Monitor
   if (isAdmin) {
+    const isPQ = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
     const adminList = document.getElementById('admin-live-stats-list');
-    adminList.innerHTML = gameState.drivers.map(d => `
-      <div style="display:flex; justify-content:space-between; border-bottom:1px solid #222; padding:2px 0;">
-        <span><strong>P${d.pos} ${d.code}</strong> (${d.tyre} ${Math.round(d.tyreLife)}%)</span>
-        <span style="font-family:monospace;">${d.crashed ? 'CRASH' : Math.round(d.speed) + 'km/h | ERS ' + Math.round(d.ers) + '%'}</span>
-      </div>
-    `).join('');
+    adminList.innerHTML = gameState.drivers.map(d => {
+      const stateTag = d.crashed ? 'CRASH' : (d.finished ? 'FIN 🏁' : (isPQ ? (d.isFlyingLap ? 'ATTACK' : 'YIELD(端)') : `${Math.round(d.speed)}km/h`));
+      return `
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #222; padding:2px 0;">
+          <span><strong>P${d.pos} ${d.code}</strong> (${d.tyre} ${Math.round(d.tyreLife)}%)</span>
+          <span style="font-family:monospace; color:${d.isFlyingLap ? '#d896ff' : '#aaa'};">${stateTag}</span>
+        </div>
+      `;
+    }).join('');
   }
 }
 
@@ -2147,12 +2535,13 @@ function highlightAdminDriverButtons() {
 }
 
 /* ============================================================================
-   11. QUALIFYING -> ODDS -> RELIABLE PARTICIPANT BETTING -> 5 LIGHTS
+   13. QUALIFYING -> ODDS -> BETTING -> 5 LIGHTS -> ALL FINISH -> PODIUM
 ============================================================================ */
 function finishQualifyingAndOpenBetting() {
   gameState.sessionId = 'ses_' + Date.now();
   gameState.phase = 'BETTING';
   gameState.betsReceived = {};
+  gameState.totalRaceLaps = Math.max(1, parseInt(document.getElementById('race-laps-input').value || '5', 10));
   document.getElementById('admin-bet-count-label').textContent = 'ベット完了: 0名';
 
   gameState.drivers.sort((a, b) => (a.bestLapTime || 999) - (b.bestLapTime || 999));
@@ -2163,12 +2552,13 @@ function finishQualifyingAndOpenBetting() {
     drv.gridPos = gridPos;
     drv.pos = gridPos;
     drv.crashed = false;
+    drv.finished = false;
+    drv.finishOrder = 999;
     drv.inPit = false;
     drv.t = (START_LINE_T - gridPos * 0.0068 + 1) % 1;
-    drv.laneOffset = (gridPos % 2 === 1) ? -3.2 : 3.2;
+    drv.laneOffset = (gridPos % 2 === 1) ? -3.4 : 3.4;
     drv.speed = 0;
 
-    // Pole Position (P1) = lowest odds, P12 = highest odds
     const winOdd = +(1.8 + Math.pow(idx, 1.55) * 0.65).toFixed(1);
     const p2Odd  = +(1.3 + Math.pow(idx, 1.45) * 0.32).toFixed(1);
     const p3Odd  = +(1.1 + Math.pow(idx, 1.35) * 0.18).toFixed(1);
@@ -2177,12 +2567,16 @@ function finishQualifyingAndOpenBetting() {
 
   forceTimingTowerRefresh();
   if (isAdmin) {
-    broadcastEvent({ type: 'OPEN_BETTING', gridOdds: gameState.gridOdds, sessionId: gameState.sessionId });
+    broadcastEvent({
+      type: 'OPEN_BETTING',
+      gridOdds: gameState.gridOdds,
+      sessionId: gameState.sessionId,
+      totalRaceLaps: gameState.totalRaceLaps
+    });
   }
 }
 
 function ensureViewerBettingUI() {
-  // Strictly NEVER open betting for Admin
   if (isAdmin) return;
 
   if (gameState.phase !== 'BETTING') {
@@ -2191,11 +2585,9 @@ function ensureViewerBettingUI() {
     return;
   }
 
-  // If participant has not bet in this session yet
   if (playerProfile.betSessionId !== gameState.sessionId) {
     playerProfile.betConfirmed = false;
     playerProfile.betSessionId = gameState.sessionId;
-    // Emergency bailout if player has 0 yen so betting never breaks
     if (playerProfile.money < 100) {
       playerProfile.money = 10000;
       saveProfile();
@@ -2247,32 +2639,39 @@ window.selectBetDriver = function(code) {
 };
 
 function startFormationLap() {
+  gameState.totalRaceLaps = Math.max(1, parseInt(document.getElementById('race-laps-input').value || '5', 10));
   gameState.phase = 'FORMATION_LAP';
-  gameState.raceLap = 0; // Formation Lap = Lap 0
+  gameState.raceLap = 0;
+  gameState.finishedCounter = 0;
   gameState.raceControl = 'GREEN';
+  podiumStageGroup.visible = false;
+
   gameState.drivers.forEach(drv => {
     drv.totalDist = 0;
     drv.crashed = false;
     drv.finished = false;
+    drv.finishOrder = 999;
   });
   document.getElementById('btn-five-lights').disabled = false;
   forceTimingTowerRefresh();
-  if (isAdmin) broadcastEvent({ type: 'START_FORMATION' });
+  if (isAdmin) broadcastEvent({ type: 'START_FORMATION', totalRaceLaps: gameState.totalRaceLaps });
 }
 
 function triggerFiveLightsStart() {
   gameState.phase = 'FIVE_LIGHTS';
+  gameState.finishedCounter = 0;
   document.getElementById('btn-five-lights').disabled = true;
 
   gameState.drivers.forEach(drv => {
     drv.t = (START_LINE_T - drv.gridPos * 0.0068 + 1) % 1;
-    drv.laneOffset = (drv.gridPos % 2 === 1) ? -3.2 : 3.2;
+    drv.laneOffset = (drv.gridPos % 2 === 1) ? -3.4 : 3.4;
     drv.speed = 0;
     drv.lap = 1;
     drv.totalDist = drv.t;
     drv.currentLapStart = performance.now();
     drv.crashed = false;
     drv.finished = false;
+    drv.finishOrder = 999;
   });
 
   runFiveLightsAnimation();
@@ -2289,11 +2688,13 @@ function runFiveLightsAnimation() {
   const interval = setInterval(() => {
     if (count < 5) {
       lights[count].classList.add('on');
+      soundEngine.playLightBeep(false);
       count++;
     } else {
       clearInterval(interval);
       setTimeout(() => {
         lights.forEach(l => l.classList.remove('on'));
+        soundEngine.playLightBeep(true);
         if (isAdmin) startRaceSession();
         setTimeout(() => { panel.style.display = 'none'; }, 1200);
       }, 900 + Math.random() * 1100);
@@ -2309,16 +2710,34 @@ function startRaceSession() {
   if (isAdmin) broadcastEvent({ type: 'RACE_GO' });
 }
 
-function checkRaceCompletion() {
-  const finishedCount = gameState.drivers.filter(d => d.finished).length;
-  if (finishedCount >= 3 && gameState.phase === 'RACE') {
-    gameState.phase = 'FINISHED';
-    const top3 = gameState.drivers.slice(0, 3).map(d => ({
-      code: d.code, name: d.name, num: d.num, team: d.team, color: d.color
-    }));
-    if (!isAdmin) showRaceResultAndSettleBet(top3);
-    if (isAdmin) broadcastEvent({ type: 'RACE_FINISHED', top3 });
+function checkAllDriversFinished() {
+  // Wait until ALL non-crashed cars have crossed the finish line and received their checkered flag!
+  const stillRunning = gameState.drivers.filter(d => !d.crashed && !d.finished);
+  if (stillRunning.length === 0 && gameState.phase === 'RACE') {
+    setTimeout(() => {
+      if (gameState.phase === 'RACE') {
+        triggerPodiumCeremony();
+      }
+    }, 1800);
   }
+}
+
+function triggerPodiumCeremony() {
+  sortDriversByCurrentStandings();
+  gameState.phase = 'PODIUM';
+  gameState.broadcast.cameraMode = 'podium';
+  document.querySelectorAll('.cam-mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.cam === 'podium');
+  });
+
+  soundEngine.playPodiumFanfare();
+  forceTimingTowerRefresh();
+
+  const top3 = gameState.drivers.slice(0, 3).map(d => ({
+    code: d.code, name: d.name, num: d.num, team: d.team, color: d.color
+  }));
+  if (!isAdmin) showRaceResultAndSettleBet(top3);
+  if (isAdmin) broadcastEvent({ type: 'PODIUM_CEREMONY', top3 });
 }
 
 function showRaceResultAndSettleBet(top3) {
@@ -2327,9 +2746,9 @@ function showRaceResultAndSettleBet(top3) {
   const podBox = document.getElementById('result-podium-box');
   const payBox = document.getElementById('result-payout-box');
 
-  const medals = ['🥇 1st PLACE', '🥈 2nd PLACE', '🥉 3rd PLACE'];
+  const medals = ['🥇 1st WINNER', '🥈 2nd PLACE', '🥉 3rd PLACE'];
   podBox.innerHTML = top3.map((d, i) => `
-    <div style="background:#222232; border-left:5px solid ${d.color}; padding:9px 14px; border-radius:4px; display:flex; justify-content:space-between;">
+    <div style="background:#222232; border-left:5px solid ${d.color}; padding:8px 14px; border-radius:4px; display:flex; justify-content:space-between;">
       <strong>${medals[i]}</strong>
       <span>#${d.num} ${d.name} 🏁 (${d.team})</span>
     </div>
@@ -2349,8 +2768,8 @@ function showRaceResultAndSettleBet(top3) {
       playerProfile.money += reward;
       saveProfile();
       payBox.innerHTML = `
-        <div style="color:var(--f1-green); font-weight:900; font-size:16px;">🎉 的中！ (${rankHit}位入賞 - 倍率 x${multiplier})</div>
-        <div style="margin-top:5px;">賭け金: ¥${playerProfile.betAmount.toLocaleString()} ➔ <strong>払戻金: ¥${reward.toLocaleString()}</strong></div>
+        <div style="color:var(--f1-green); font-weight:900; font-size:16px;">🎉 的中！ (${rankHit}位表彰台 - 倍率 x${multiplier})</div>
+        <div style="margin-top:4px;">賭け金: ¥${playerProfile.betAmount.toLocaleString()} ➔ <strong>払戻金: ¥${reward.toLocaleString()}</strong></div>
       `;
     } else {
       payBox.innerHTML = `
@@ -2360,22 +2779,21 @@ function showRaceResultAndSettleBet(top3) {
     }
     playerProfile.betConfirmed = false;
   } else {
-    payBox.innerHTML = `<div>今回のレースではベットが行われませんでした。</div>`;
+    payBox.innerHTML = `<div>今回のレースではベットが行われませんでした。背景の3D表彰式をお楽しみください！</div>`;
   }
   modal.style.display = 'flex';
 }
 
 /* ============================================================================
-   12. P2P NETWORKING (PeerJS + BroadcastChannel Sync)
+   14. P2P NETWORKING
 ============================================================================ */
 let peer = null;
 let peerConnections = [];
 let hostConn = null;
-const localChannel = new BroadcastChannel('f1_p2p_channel_2026_v2');
+const localChannel = new BroadcastChannel('f1_p2p_channel_2026_v3');
 
 function initNetworking() {
   localChannel.onmessage = (ev) => handleNetworkPacket(ev.data);
-
   if (isAdmin) {
     createHostGame();
   } else if (isValidViewer) {
@@ -2384,7 +2802,7 @@ function initNetworking() {
 }
 
 function createHostGame() {
-  initDriversList(selectRandom12Drivers());
+  initDriversList(selectRandom12WithRandomStats());
   gameState.phase = 'FREE_PRACTICE';
 
   const shareBase = window.location.origin + window.location.pathname.replace(/\/admin$/, '');
@@ -2438,6 +2856,7 @@ function handleNetworkPacket(pkt) {
     gameState.phase = pkt.state.phase;
     gameState.timer = pkt.state.timer;
     gameState.raceLap = pkt.state.raceLap;
+    gameState.totalRaceLaps = pkt.state.totalRaceLaps || 5;
     gameState.raceControl = pkt.state.raceControl;
     gameState.scTrackT = pkt.state.scTrackT;
     gameState.weather = pkt.state.weather;
@@ -2459,16 +2878,22 @@ function handleNetworkPacket(pkt) {
   } else if (pkt.type === 'OPEN_BETTING' && !isAdmin) {
     gameState.gridOdds = pkt.gridOdds;
     gameState.sessionId = pkt.sessionId;
+    gameState.totalRaceLaps = pkt.totalRaceLaps || 5;
     gameState.phase = 'BETTING';
     ensureViewerBettingUI();
   } else if (pkt.type === 'START_FORMATION' && !isAdmin) {
     gameState.phase = 'FORMATION_LAP';
     gameState.raceLap = 0;
+    gameState.totalRaceLaps = pkt.totalRaceLaps || 5;
+    document.getElementById('result-modal').style.display = 'none';
     ensureViewerBettingUI();
     forceTimingTowerRefresh();
   } else if (pkt.type === 'FIVE_LIGHTS_SEQ' && !isAdmin) {
     runFiveLightsAnimation();
-  } else if (pkt.type === 'RACE_FINISHED' && !isAdmin) {
+  } else if (pkt.type === 'PODIUM_CEREMONY' && !isAdmin) {
+    gameState.phase = 'PODIUM';
+    soundEngine.playPodiumFanfare();
+    forceTimingTowerRefresh();
     showRaceResultAndSettleBet(pkt.top3);
   } else if (pkt.type === 'PLAYER_BET' && isAdmin) {
     gameState.betsReceived[pkt.playerId] = pkt;
@@ -2480,7 +2905,6 @@ function handleNetworkPacket(pkt) {
   }
 }
 
-// Host State Broadcast Loop (20Hz)
 setInterval(() => {
   if (isAdmin && gameState.drivers.length > 0) {
     broadcastEvent({
@@ -2490,6 +2914,7 @@ setInterval(() => {
         phase: gameState.phase,
         timer: gameState.timer,
         raceLap: gameState.raceLap,
+        totalRaceLaps: gameState.totalRaceLaps,
         raceControl: gameState.raceControl,
         scTrackT: gameState.scTrackT,
         weather: gameState.weather,
@@ -2502,7 +2927,7 @@ setInterval(() => {
 }, 50);
 
 /* ============================================================================
-   13. UI CONTROLS & EVENT LISTENERS
+   15. UI CONTROLS & EVENT LISTENERS
 ============================================================================ */
 if (isValidViewer && !playerProfile.name) {
   document.getElementById('name-modal').style.display = 'flex';
@@ -2512,15 +2937,27 @@ saveProfile();
 document.getElementById('btn-save-name').addEventListener('click', () => {
   playerProfile.name = document.getElementById('player-name-input').value.trim() || 'Player';
   saveProfile();
+  soundEngine.resume();
   document.getElementById('name-modal').style.display = 'none';
 });
 
-// Viewer Collapsible Top Info Menu
+// Sound Toggle Buttons
+function handleSoundToggle() {
+  const on = soundEngine.toggle();
+  const aBtn = document.getElementById('btn-admin-sound');
+  const vBtn = document.getElementById('btn-viewer-sound');
+  aBtn.classList.toggle('active', on);
+  vBtn.classList.toggle('active', on);
+  aBtn.textContent = on ? '🔊 サウンド: ON' : '🔇 サウンド: OFF';
+  vBtn.textContent = on ? '🔊 音: ON' : '🔇 音: OFF';
+}
+document.getElementById('btn-admin-sound').addEventListener('click', handleSoundToggle);
+document.getElementById('btn-viewer-sound').addEventListener('click', handleSoundToggle);
+
 document.getElementById('btn-toggle-top-info').addEventListener('click', () => {
   document.getElementById('viewer-top-dropdown').classList.toggle('open');
 });
 
-// Viewer Collapsible Camera Menu
 document.getElementById('btn-toggle-cam-menu').addEventListener('click', () => {
   document.getElementById('viewer-cam-popup').classList.toggle('open');
 });
@@ -2538,16 +2975,30 @@ document.getElementById('user-onboard-select').addEventListener('change', (e) =>
 });
 
 // Admin Controls
+document.getElementById('race-laps-input').addEventListener('change', (e) => {
+  gameState.totalRaceLaps = Math.max(1, parseInt(e.target.value || '5', 10));
+});
+
+document.getElementById('btn-reroll-Random').addEventListener('click', () => {
+  initDriversList(selectRandom12WithRandomStats());
+  gameState.phase = 'FREE_PRACTICE';
+  gameState.broadcast.cameraMode = 'track';
+  forceTimingTowerRefresh();
+});
+
 document.getElementById('btn-start-quali').addEventListener('click', () => {
   const dur = parseInt(document.getElementById('quali-duration-input').value || '60', 10);
   gameState.phase = 'QUALIFYING';
   gameState.timer = dur;
   gameState.raceControl = 'GREEN';
+  gameState.broadcast.cameraMode = 'track';
   gameState.drivers.forEach((d, idx) => {
     d.bestLapTime = null;
     d.currentLapStart = performance.now();
     d.inPit = false;
     d.crashed = false;
+    d.finished = false;
+    d.isFlyingLap = idx % 3 !== 2;
     d.t = (idx / 12) % 1;
   });
   forceTimingTowerRefresh();
@@ -2555,7 +3006,7 @@ document.getElementById('btn-start-quali').addEventListener('click', () => {
 
 document.getElementById('btn-end-quali').addEventListener('click', () => {
   gameState.drivers.forEach(d => {
-    if (!d.bestLapTime) d.bestLapTime = 77.5 + (1 - d.skill) * 16 + Math.random() * 1.1;
+    if (!d.bestLapTime) d.bestLapTime = 73.8 + (1 - d.skill) * 14 + Math.random() * 1.1;
   });
   finishQualifyingAndOpenBetting();
 });
@@ -2582,7 +3033,6 @@ document.getElementById('btn-admin-all-onboard').addEventListener('click', (e) =
   e.target.textContent = `全12台マルチ: ${userViewConfig.adminGrid12 ? 'ON' : 'OFF'}`;
 });
 
-// Admin Overlay Toggles
 function bindBroadcastToggle(btnId, propName, labelPrefix) {
   const btn = document.getElementById(btnId);
   btn.addEventListener('click', () => {
@@ -2597,10 +3047,10 @@ bindBroadcastToggle('btn-toggle-tower', 'showTower', '順位タワー');
 bindBroadcastToggle('btn-toggle-times', 'showTimes', 'タイム差');
 bindBroadcastToggle('btn-toggle-tyres', 'showTyres', 'タイヤ表示');
 bindBroadcastToggle('btn-toggle-banner', 'showBanner', '選手名・順位バナー');
+bindBroadcastToggle('btn-toggle-flying', 'showFlyingLap', 'リアルタイム計測');
 bindBroadcastToggle('btn-toggle-gps', 'showGps', 'GPSマップ');
 bindBroadcastToggle('btn-toggle-weather', 'showWeather', '気象情報(左下)');
 
-// Admin Race Control & Weather Buttons
 document.querySelectorAll('.rc-mode-btn').forEach(btn => {
   btn.addEventListener('click', () => setRaceControlState(btn.dataset.rc));
 });
@@ -2608,7 +3058,7 @@ document.querySelectorAll('.weather-btn').forEach(btn => {
   btn.addEventListener('click', () => setWeatherCondition(btn.dataset.w));
 });
 
-// Participant Betting Controls
+// Participant Betting
 document.getElementById('btn-floating-bet').addEventListener('click', () => {
   if (isAdmin) return;
   renderBettingCards();
@@ -2658,9 +3108,9 @@ document.getElementById('btn-close-result').addEventListener('click', () => {
 });
 
 /* ============================================================================
-   14. BOOTSTRAP & MAIN LOOP
+   16. BOOTSTRAP & MAIN LOOP
 ============================================================================ */
-initDriversList(selectRandom12Drivers());
+initDriversList(selectRandom12WithRandomStats());
 initNetworking();
 
 let lastFrameTime = performance.now();
