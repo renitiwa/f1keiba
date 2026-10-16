@@ -1083,14 +1083,14 @@ for (let i = 0; i < TRACK_SAMPLES; i++) {
 
   let offset = 0;
   if (Math.abs(atApex) > 0.025) {
-    offset = -Math.sign(atApex) * Math.min(8.8, Math.abs(atApex) * 75);
+    offset = -Math.sign(atApex) * Math.min(8.2, Math.abs(atApex) * 70);
   } else {
-    offset = Math.sign(aheadCorner + behindCorner) * Math.min(8.5, Math.abs(aheadCorner + behindCorner) * 55);
+    offset = Math.sign(aheadCorner + behindCorner) * Math.min(7.8, Math.abs(aheadCorner + behindCorner) * 50);
   }
   idealRacingLine[i] = offset;
 }
 
-for (let pass = 0; pass < 4; pass++) {
+for (let pass = 0; pass < 5; pass++) {
   for (let i = 0; i < TRACK_SAMPLES; i++) {
     const prev = idealRacingLine[(i - 3 + TRACK_SAMPLES) % TRACK_SAMPLES];
     const next = idealRacingLine[(i + 3) % TRACK_SAMPLES];
@@ -1532,23 +1532,23 @@ const safetyCarGroup = new THREE.Group();
 })();
 
 /* ============================================================================
-   9. RANDOMIZED DRIVER STATS, FP/QUALI GHOSTING & BUFFED OVERTAKE AI
+   9. RANDOMIZED STATS, COMMITTED OVERTAKE AI & SINGLE-FILE MERGE
 ============================================================================ */
 let carMeshes = {};
 
 function selectRandom12WithRandomStats() {
   const chosen = [...ALL_2026_DRIVERS].sort(() => Math.random() - 0.5).slice(0, 12);
   const skillPool = [
-    1.004, 1.001, 0.998, 0.995,
-    0.989, 0.986, 0.982, 0.978,
+    1.006, 1.002, 0.999, 0.995,
+    0.990, 0.986, 0.982, 0.978,
     0.971, 0.966, 0.958, 0.952
   ].sort(() => Math.random() - 0.5);
 
   return chosen.map((d, i) => ({
     ...d,
     skill: skillPool[i] + (Math.random() * 0.006 - 0.003),
-    racePaceFactor: 0.992 + Math.random() * 0.018,
-    linePreference: (Math.random() - 0.5) * 3.6
+    racePaceFactor: 0.990 + Math.random() * 0.022,
+    linePreference: (Math.random() - 0.5) * 0.5 // Subtle variation so cars converge cleanly onto the ideal racing line when not passing
   }));
 }
 
@@ -1582,7 +1582,12 @@ function initDriversList(selectedDriversData) {
       tyreLife: d.tyreLife !== undefined ? d.tyreLife : 100,
       ers: d.ers !== undefined ? d.ers : 100,
       momActive: Boolean(d.momActive),
-      overtakeState: d.overtakeState || 'NORMAL', // NORMAL, ATTACK, BACK_OFF, AVOID_WRECK
+      overtakeState: d.overtakeState || 'NORMAL',
+      // Overtake Commitment state to prevent endless side-by-side ping-ponging
+      passCommitTimer: 0,
+      passLane: 0,
+      passingTargetCode: null,
+      passedCooldown: 0,
       isFlyingLap: isFlying,
       yieldingToFastCar: Boolean(d.yieldingToFastCar),
       inPit: Boolean(d.inPit),
@@ -1681,10 +1686,9 @@ function extrapolateViewerCars(dt) {
   }
 }
 
-// 11 Fine-grained candidate passing lanes across the 24m-wide track for frequent overtakes
-const CANDIDATE_LANES = [-9.6, -7.6, -5.6, -3.6, -1.8, 0, 1.8, 3.6, 5.6, 7.6, 9.6];
+const CANDIDATE_LANES = [-9.2, -7.2, -5.2, -3.4, -1.6, 0, 1.6, 3.4, 5.2, 7.2, 9.2];
 
-function evaluateOvertakeAndAvoidance(drv) {
+function evaluateTrafficWindow(drv) {
   let closestCarAhead = null;
   let minAheadDistM = 9999;
   const obstaclesInWindow = [];
@@ -1704,9 +1708,9 @@ function evaluateOvertakeAndAvoidance(drv) {
       return;
     }
 
-    if (longDistM > -10 && longDistM < 185) {
+    if (longDistM > -16 && longDistM < 160) {
       obstaclesInWindow.push({ car: other, longDistM });
-      if (longDistM > 0 && longDistM < minAheadDistM) {
+      if (longDistM > 2.5 && longDistM < minAheadDistM) {
         minAheadDistM = longDistM;
         closestCarAhead = other;
       }
@@ -1780,6 +1784,7 @@ function updateSimulation(dt) {
 
     if (drv.inPit) {
       drv.momActive = false;
+      drv.passCommitTimer = 0;
       drv.overtakeState = 'PIT';
       if (drv.pitStage === 1) {
         drv.speed = 80;
@@ -1829,6 +1834,9 @@ function updateSimulation(dt) {
       return;
     }
 
+    if (drv.passCommitTimer > 0) drv.passCommitTimer = Math.max(0, drv.passCommitTimer - dt);
+    if (drv.passedCooldown > 0) drv.passedCooldown = Math.max(0, drv.passedCooldown - dt);
+
     let baseTargetSpeed = getTargetSpeedAt(drv.t);
     const sampleIdx = Math.floor(((drv.t % 1 + 1) % 1) * TRACK_SAMPLES);
     const upcomingCurv = Math.max(trackCurvature[sampleIdx], trackCurvature[(sampleIdx + 10) % TRACK_SAMPLES]);
@@ -1855,107 +1863,177 @@ function updateSimulation(dt) {
     // =========================================================================
     if (isPracticeOrQuali) {
       if (!drv.isFlyingLap) {
-        // Out-lap / Cool-down car drives along the edge of the track, ghosting through everyone
         baseTargetSpeed = Math.min(baseTargetSpeed * 0.62, 165);
         drv.targetLane = idealLine > 0 ? -9.5 : 9.5;
         drv.overtakeState = 'YIELD';
       } else {
-        // Flying Lap Attack car drives the pure ideal racing line at 100% pace with zero traffic interference
-        drv.targetLane = Math.max(-9.5, Math.min(9.5, idealLine + drv.linePreference * 0.3));
+        drv.targetLane = Math.max(-9.2, Math.min(9.2, idealLine + drv.linePreference));
         drv.overtakeState = 'ATTACK';
       }
       drv.ers = 100;
     }
     // =========================================================================
-    // BRANCH B: GRAND PRIX RACE -> BUFFED OVERTAKE MODE (MOM) & SMART AVOIDANCE
+    // BRANCH B: GRAND PRIX RACE -> COMMITTED PASSING & SINGLE-FILE MERGE
     // =========================================================================
     else {
+      // By default, every car wants to merge back onto the single-file ideal racing line!
       if (drv.finished) {
         baseTargetSpeed = Math.min(baseTargetSpeed * 0.65, 175);
         drv.targetLane = idealLine > 0 ? -9.5 : 9.5;
       } else {
-        drv.targetLane = Math.max(-9.5, Math.min(9.5, idealLine + drv.linePreference * 0.45));
+        drv.targetLane = Math.max(-9.0, Math.min(9.0, idealLine + drv.linePreference));
       }
 
       const { closestCarAhead, minAheadDistM, obstaclesInWindow, crashedCarAhead } =
-        evaluateOvertakeAndAvoidance(drv);
+        evaluateTrafficWindow(drv);
 
       if (crashedCarAhead) {
         drv.overtakeState = 'AVOID_WRECK';
+        drv.passCommitTimer = 0;
         drv.targetLane = crashedCarAhead.laneOffset > 0 ? -7.5 : 7.5;
-      } else if (closestCarAhead && minAheadDistM < 185 && !drv.finished && gameState.raceControl === 'GREEN') {
-        // Slipstream & Overtake Evaluation across 11 candidate lanes
-        let bestLane = null;
-        let bestLaneScore = -999;
+      }
+      // 1) CURRENTLY EXECUTING A COMMITTED OVERTAKE: Keep boost & lane until 14m ahead of target!
+      else if (drv.passCommitTimer > 0 && !drv.finished && gameState.raceControl === 'GREEN') {
+        const targetCar = gameState.drivers.find(d => d.code === drv.passingTargetCode);
+        let distAheadOfTarget = 999;
+        if (targetCar && !targetCar.crashed && !targetCar.inPit) {
+          let dT = (drv.t - targetCar.t + 1) % 1;
+          if (dT > 0.5) dT -= 1.0;
+          distAheadOfTarget = dT * TRACK_LENGTH_METERS;
+        }
 
-        CANDIDATE_LANES.forEach(candLane => {
-          let laneBlocked = false;
-          let minLatClearance = 99;
-
-          obstaclesInWindow.forEach(obs => {
-            if (obs.longDistM > -5.5 && obs.longDistM < 52) {
-              const latDiff = Math.abs(obs.car.laneOffset - candLane);
-              if (latDiff < 2.15) {
-                laneBlocked = true;
-              }
-              if (latDiff < minLatClearance) minLatClearance = latDiff;
-            }
-          });
-
-          if (!laneBlocked) {
-            const steerCost = Math.abs(candLane - drv.laneOffset) * 0.25;
-            const idealCost = Math.abs(candLane - idealLine) * 0.12;
-            const score = minLatClearance - steerCost - idealCost;
-            if (score > bestLaneScore) {
-              bestLaneScore = score;
-              bestLane = candLane;
+        // Check if our committed passing lane got blocked by a slower car ahead
+        let committedLaneBlockedAhead = null;
+        obstaclesInWindow.forEach(obs => {
+          if (obs.car.code !== drv.passingTargetCode && obs.longDistM > 0 && obs.longDistM < 22) {
+            if (Math.abs(obs.car.laneOffset - drv.passLane) < 2.2) {
+              committedLaneBlockedAhead = obs.car;
             }
           }
         });
 
-        // Only abort overtake ("いったん諦める") if completely boxed in by multiple cars OR entering a very tight hairpin
-        const isTightHairpinBlock = (upcomingCurv > 0.075 && minAheadDistM > 10 && minAheadDistM < 32);
-
-        if (bestLane !== null && !isTightHairpinBlock) {
-          // GO FOR THE OVERTAKE!
-          drv.overtakeState = 'ATTACK';
-          drv.targetLane = bestLane;
-          baseTargetSpeed += 19; // Strong slipstream draft boost
-
-          // BUFFED OVERTAKE MODE (MOM): Triggers from 175 km/h+ with ERS > 8% for explosive passes!
-          if (drv.ers > 8 && baseTargetSpeed > 175) {
-            drv.momActive = true;
-            drv.ers = Math.max(0, drv.ers - dt * 11.5);
-            baseTargetSpeed += 38; // Massive MOM electric + active aero X-mode speed boost (+57 km/h total with slipstream!)
-          } else {
-            // Rapidly harvest ERS while in slipstream preparing to pounce
-            drv.ers = Math.min(100, drv.ers + dt * 20);
-          }
-        } else {
-          // Boxed in / impossible corner entry -> Temporarily back off & recharge ERS for the next straight
+        if (distAheadOfTarget > 14.0 || !targetCar) {
+          // Pass is 100% complete! End commitment so car merges smoothly back onto the single-file ideal line
+          drv.passCommitTimer = 0;
+          drv.passingTargetCode = null;
+        } else if (committedLaneBlockedAhead) {
+          // Another car is blocking our passing lane ahead -> abort safely ("無理そうならいったん諦める")
+          drv.passCommitTimer = 0;
           drv.overtakeState = 'BACK_OFF';
-          drv.momActive = false;
-          drv.ers = Math.min(100, drv.ers + dt * 28);
-          drv.targetLane = closestCarAhead.laneOffset * 0.7 + idealLine * 0.3;
-          if (minAheadDistM < 28) {
-            speedCapFromTraffic = Math.max(125, closestCarAhead.speed * (minAheadDistM < 12 ? 0.96 : 0.99));
+          speedCapFromTraffic = committedLaneBlockedAhead.speed * 0.97;
+        } else {
+          // Keep full passing momentum until we clear the target car!
+          drv.overtakeState = 'ATTACK';
+          drv.targetLane = drv.passLane;
+          baseTargetSpeed += 22;
+          if (drv.ers > 5) {
+            drv.momActive = true;
+            drv.ers = Math.max(0, drv.ers - dt * 11.0);
+            baseTargetSpeed += 34; // Decisive MOM overspeed so cars don't linger side-by-side
           }
         }
+      }
+      // 2) NOT YET COMMITTED: Check Slipstream & Scan for an Open Passing Lane
+      else if (closestCarAhead && minAheadDistM < 125 && !drv.finished && gameState.raceControl === 'GREEN') {
+        // Pure Slipstream Draft when tucked behind a car (within ±3.4m laterally)
+        if (Math.abs(closestCarAhead.laneOffset - drv.laneOffset) < 3.4) {
+          baseTargetSpeed += 16;
+          drv.ers = Math.min(100, drv.ers + dt * 18);
+        }
+
+        // When close enough (< 42m) and not on cooldown from just being passed, attempt to launch an overtake!
+        if (minAheadDistM < 42 && drv.passedCooldown <= 0) {
+          let bestLane = null;
+          let bestLaneScore = -999;
+
+          CANDIDATE_LANES.forEach(candLane => {
+            // Must step out at least 2.5m laterally from the car we want to pass
+            if (Math.abs(candLane - closestCarAhead.laneOffset) < 2.55) return;
+
+            let laneBlocked = false;
+            let minLatClearance = 99;
+
+            obstaclesInWindow.forEach(obs => {
+              if (obs.longDistM > -6.0 && obs.longDistM < 48) {
+                const latDiff = Math.abs(obs.car.laneOffset - candLane);
+                if (latDiff < 2.35) {
+                  laneBlocked = true;
+                }
+                if (latDiff < minLatClearance) minLatClearance = latDiff;
+              }
+            });
+
+            if (!laneBlocked) {
+              const steerCost = Math.abs(candLane - drv.laneOffset) * 0.25;
+              const idealCost = Math.abs(candLane - idealLine) * 0.15;
+              const score = minLatClearance - steerCost - idealCost;
+              if (score > bestLaneScore) {
+                bestLaneScore = score;
+                bestLane = candLane;
+              }
+            }
+          });
+
+          const isTightCornerEntry = (upcomingCurv > 0.062 && minAheadDistM > 10);
+          const hasPassMomentum = (drv.speed >= closestCarAhead.speed - 3 || drv.ers > 18);
+
+          if (bestLane !== null && !isTightCornerEntry && hasPassMomentum) {
+            // Launch committed overtake!
+            drv.passCommitTimer = 2.8;
+            drv.passLane = bestLane;
+            drv.passingTargetCode = closestCarAhead.code;
+            drv.targetLane = bestLane;
+            drv.overtakeState = 'ATTACK';
+            // Give the car being overtaken a brief cooldown so it doesn't immediately rubber-band alongside
+            closestCarAhead.passedCooldown = 2.4;
+
+            baseTargetSpeed += 22;
+            if (drv.ers > 8 && baseTargetSpeed > 170) {
+              drv.momActive = true;
+              drv.ers = Math.max(0, drv.ers - dt * 11.0);
+              baseTargetSpeed += 34;
+            }
+          } else if (minAheadDistM < 26) {
+            // No safe lane or tight corner -> Back off into single-file behind leader ("無理そうならいったん諦める")
+            drv.overtakeState = 'BACK_OFF';
+            drv.momActive = false;
+            drv.ers = Math.min(100, drv.ers + dt * 26);
+            drv.targetLane = closestCarAhead.laneOffset;
+            speedCapFromTraffic = Math.max(125, closestCarAhead.speed * (minAheadDistM < 12 ? 0.96 : 0.99));
+          }
+        } else if (minAheadDistM < 24 && drv.passedCooldown > 0) {
+          // Just got overtaken: tuck into single-file behind the new leader instead of staying side-by-side
+          drv.targetLane = closestCarAhead.laneOffset;
+          speedCapFromTraffic = closestCarAhead.speed * 0.97;
+        }
       } else {
-        // Fast ERS recharging when not deploying MOM
-        drv.ers = Math.min(100, drv.ers + dt * (baseTargetSpeed < 245 ? 24 : 10));
+        drv.ers = Math.min(100, drv.ers + dt * (baseTargetSpeed < 245 ? 22 : 10));
       }
 
-      // Side-by-Side Lateral Avoidance during Race
+      // 3) ANTI-SIDE-BY-SIDE DEADLOCK RESOLVER:
+      // If two cars are still side-by-side within 7.5m longitudinally, keep lateral spacing AND resolve who wins the corner/straight
       obstaclesInWindow.forEach(obs => {
-        if (Math.abs(obs.longDistM) < 8.0) {
+        if (Math.abs(obs.longDistM) < 7.5) {
           const latDiff = drv.laneOffset - obs.car.laneOffset;
-          if (Math.abs(latDiff) < 2.45) {
+          if (Math.abs(latDiff) < 2.5) {
             const pushDir = latDiff >= 0 ? 1 : -1;
-            drv.targetLane = Math.max(-9.6, Math.min(9.6, drv.targetLane + pushDir * 2.1));
+            drv.targetLane = Math.max(-9.5, Math.min(9.5, drv.laneOffset + pushDir * 1.8));
+          }
+          // If neither car has an active pass commitment, the car slightly behind yields 10 km/h so they resolve into single-file immediately
+          if (drv.passCommitTimer <= 0 && obs.car.passCommitTimer <= 0 && obs.longDistM > 0) {
+            baseTargetSpeed -= 12;
           }
         }
       });
+
+      // 4) OFF-LINE CORNERING PENALTY:
+      // Driving far off the ideal racing line in a curve slightly reduces cornering speed so side-by-side battles resolve naturally at corners
+      if (upcomingCurv > 0.032) {
+        const offLineDist = Math.abs(drv.laneOffset - idealLine);
+        if (offLineDist > 2.5) {
+          baseTargetSpeed *= Math.max(0.93, 1.0 - (offLineDist - 2.5) * 0.009);
+        }
+      }
 
       if (gameState.raceControl === 'VSC') {
         baseTargetSpeed = Math.min(baseTargetSpeed, 160);
@@ -1968,11 +2046,10 @@ function updateSimulation(dt) {
       }
     }
 
-    // Extra nimble steering when attacking
-    const steerRate = drv.overtakeState === 'ATTACK' ? 6.5 : 4.8;
+    const steerRate = drv.overtakeState === 'ATTACK' ? 6.2 : 4.2;
     drv.laneOffset += (drv.targetLane - drv.laneOffset) * Math.min(1, dt * steerRate);
 
-    const dynamicWave = 0.986 + Math.sin(now * 0.0012 + i * 1.7) * 0.024;
+    const dynamicWave = 0.988 + Math.sin(now * 0.0012 + i * 1.7) * 0.02;
     const effectiveSkill = drv.skill * (gameState.phase === 'RACE' ? drv.racePaceFactor : 1.0);
     let desiredSpeed = baseTargetSpeed * effectiveSkill * tyreGrip * wearPenalty * dynamicWave;
 
@@ -1980,8 +2057,7 @@ function updateSimulation(dt) {
       desiredSpeed = Math.min(desiredSpeed, speedCapFromTraffic);
     }
 
-    // Explosive acceleration when OVERTAKE MODE (MOM) is active!
-    const forwardAccel = drv.momActive ? 185 : 115;
+    const forwardAccel = drv.momActive ? 190 : 115;
     const accelRate = desiredSpeed > drv.speed ? forwardAccel : 225;
     if (drv.speed < desiredSpeed) {
       drv.speed = Math.min(desiredSpeed, drv.speed + accelRate * dt);
@@ -2718,13 +2794,13 @@ function updateUI() {
         stateTag = d.isFlyingLap ? 'ATTACK (GHOST)' : 'SLOW (GHOST)';
         stateColor = d.isFlyingLap ? '#d896ff' : '#7799bb';
       } else if (d.momActive) {
-        stateTag = '⚡ MOM BOOST';
+        stateTag = '⚡ MOM PASS';
         stateColor = '#d896ff';
       } else if (d.overtakeState === 'ATTACK') {
-        stateTag = '🔥 SLIPSTREAM';
+        stateTag = '🔥 PASSING';
         stateColor = '#ff99ff';
       } else if (d.overtakeState === 'BACK_OFF') {
-        stateTag = '⏳ 見送り(待機)';
+        stateTag = '⏳ 見送り(1列待機)';
         stateColor = '#ffd000';
       } else if (d.overtakeState === 'AVOID_WRECK') {
         stateTag = '⚠️ 事故車回避';
@@ -2799,6 +2875,8 @@ function finishQualifyingAndOpenBetting() {
     drv.finished = false;
     drv.finishOrder = 999;
     drv.inPit = false;
+    drv.passCommitTimer = 0;
+    drv.passedCooldown = 0;
     drv.t = (START_LINE_T - gridPos * 0.0068 + 1) % 1;
     drv.laneOffset = (gridPos % 2 === 1) ? -3.4 : 3.4;
     drv.speed = 0;
@@ -2896,6 +2974,8 @@ function startFormationLap() {
     drv.crashed = false;
     drv.finished = false;
     drv.finishOrder = 999;
+    drv.passCommitTimer = 0;
+    drv.passedCooldown = 0;
   });
   document.getElementById('btn-five-lights').disabled = false;
   forceTimingTowerRefresh();
@@ -2921,6 +3001,8 @@ function triggerFiveLightsStart() {
     drv.finished = false;
     drv.finishOrder = 999;
     drv.ers = 100;
+    drv.passCommitTimer = 0;
+    drv.passedCooldown = 0;
   });
 
   runFiveLightsAnimation();
@@ -3302,6 +3384,8 @@ document.getElementById('btn-start-quali').addEventListener('click', () => {
     d.inPit = false;
     d.crashed = false;
     d.finished = false;
+    d.passCommitTimer = 0;
+    d.passedCooldown = 0;
     d.isFlyingLap = idx % 3 !== 2;
     d.t = (idx / 12) % 1;
   });
