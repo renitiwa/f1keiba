@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>F1 2026 BROADCAST & BETTING SIMULATOR</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -17,10 +17,14 @@
       --f1-yellow: #ffd000;
       --f1-blue: #0090ff;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
     body, html {
-      width: 100%; height: 100%; overflow: hidden;
-      background: #09090e; color: #fff;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background: #09090e;
+      color: #fff;
       font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
     }
 
@@ -45,10 +49,15 @@
     }
 
     /* =========================================================
-       LAYOUT MODES: VIEWER (FULLSCREEN) vs ADMIN (STUDIO)
+       LAYOUT MODES: VIEWER (AUTO-FIT DEVICE) vs ADMIN (STUDIO)
     ========================================================= */
     #canvas-container {
-      position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
+      position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    #canvas-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
     }
     body.admin-mode #canvas-container {
       position: fixed;
@@ -62,7 +71,7 @@
     }
 
     #ui-layer {
-      position: absolute; inset: 0; z-index: 10; pointer-events: none;
+      position: fixed; inset: 0; z-index: 10; pointer-events: none;
     }
     .interactive { pointer-events: auto; }
 
@@ -70,29 +79,29 @@
        VIEWER COLLAPSIBLE TOP BAR (LIVE / WALLET / SOUND)
     ========================================================= */
     #viewer-top-bar {
-      position: absolute; top: 12px; left: 14px; z-index: 25;
-      display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+      position: absolute; top: 10px; left: 10px; z-index: 25;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
     }
     body.admin-mode #viewer-top-bar { display: none; }
 
     .top-toggle-btn {
       background: rgba(16, 16, 24, 0.94); border: 1px solid var(--f1-border);
       border-left: 4px solid var(--f1-red); color: #fff;
-      padding: 7px 14px; border-radius: 6px; font-weight: 800; font-size: 13px;
-      cursor: pointer; display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px; border-radius: 6px; font-weight: 800; font-size: clamp(11px, 1.4vw, 13px);
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     }
     .live-dot {
-      width: 9px; height: 9px; border-radius: 50%; background: var(--f1-red);
+      width: 8px; height: 8px; border-radius: 50%; background: var(--f1-red);
       display: inline-block; animation: blink 1s infinite alternate;
     }
     @keyframes blink { from { opacity: 0.4; } to { opacity: 1; } }
 
     #viewer-top-dropdown {
       background: var(--f1-panel); border: 1px solid var(--f1-border);
-      border-radius: 8px; padding: 12px 16px; min-width: 265px;
-      display: none; flex-direction: column; gap: 8px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.75); font-size: 13px;
+      border-radius: 8px; padding: 10px 14px; min-width: 240px;
+      display: none; flex-direction: column; gap: 6px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.75); font-size: 12px;
     }
     #viewer-top-dropdown.open { display: flex; }
 
@@ -100,11 +109,11 @@
        RACE CONTROL BANNER (SAFETY CAR / VSC / PODIUM)
     ========================================================= */
     #race-control-banner {
-      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
       z-index: 35; background: var(--f1-yellow); color: #000;
-      font-weight: 900; font-size: 15px; letter-spacing: 1.5px;
-      padding: 7px 24px; border-radius: 6px; border: 2px solid #000;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none;
+      font-weight: 900; font-size: clamp(12px, 1.6vw, 15px); letter-spacing: 1px;
+      padding: 6px 18px; border-radius: 6px; border: 2px solid #000;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8); display: none; white-space: nowrap;
     }
     body.admin-mode #race-control-banner { top: 52px; }
 
@@ -112,43 +121,46 @@
        SLIM LIVE TIMING TOWER (LEFT SIDE)
     ========================================================= */
     #timing-tower {
-      position: absolute; top: 58px; left: 14px; width: 205px;
+      position: absolute; top: 50px; left: 10px;
+      width: clamp(155px, 20vw, 200px);
+      max-height: calc(100dvh - 130px);
       background: rgba(14, 14, 20, 0.92); border-top: 3px solid var(--f1-red);
       border-radius: 0 0 6px 6px; box-shadow: 0 8px 25px rgba(0,0,0,0.65);
-      overflow: hidden; transition: opacity 0.25s, transform 0.25s; z-index: 20;
+      overflow-y: auto; overflow-x: hidden;
+      transition: opacity 0.25s, transform 0.25s; z-index: 20;
     }
     body.admin-mode #timing-tower {
-      position: fixed; top: 42px; left: 0; width: 240px; bottom: 235px;
+      position: fixed; top: 42px; left: 0; width: 240px; max-height: none; bottom: 235px;
       border-radius: 0; border-top: none; border-right: 1px solid #2a2a3a;
       opacity: 1 !important; transform: none !important;
     }
     #timing-tower.hidden-tower { opacity: 0; transform: translateX(-235px); pointer-events: none; }
 
     .tower-header {
-      background: #1d1d2b; padding: 6px 10px; font-size: 11px; font-weight: 900;
+      background: #1d1d2b; padding: 5px 8px; font-size: 10px; font-weight: 900;
       display: flex; justify-content: space-between; align-items: center; color: #ddd;
     }
     .tower-row {
-      display: flex; align-items: center; padding: 4px 8px;
-      border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px;
+      display: flex; align-items: center; padding: 3px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.06); font-size: clamp(10px, 1.2vw, 12px);
       cursor: pointer; transition: background 0.12s;
     }
     .tower-row:hover { background: rgba(255,255,255,0.1); }
     .tower-row.focused { background: rgba(225, 6, 0, 0.28); }
     .tower-row.crashed-row { opacity: 0.45; }
-    .pos-num { width: 20px; font-weight: 800; text-align: center; font-size: 11px; color: #ccc; }
-    .team-stripe { width: 3px; height: 15px; margin: 0 6px; border-radius: 2px; }
-    .drv-code { font-weight: 800; width: 54px; font-size: 12px; display: flex; align-items: center; gap: 3px; }
+    .pos-num { width: 18px; font-weight: 800; text-align: center; font-size: 10px; color: #ccc; }
+    .team-stripe { width: 3px; height: 14px; margin: 0 5px; border-radius: 2px; flex-shrink: 0; }
+    .drv-code { font-weight: 800; width: 48px; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
     .mom-dot {
       width: 6px; height: 6px; border-radius: 50%; background: var(--f1-purple);
       display: none; box-shadow: 0 0 6px var(--f1-purple);
     }
     .mom-dot.active { display: inline-block; }
-    .drv-gap { flex: 1; text-align: right; font-family: monospace; font-size: 11px; color: #e0e0e0; }
+    .drv-gap { flex: 1; text-align: right; font-family: monospace; font-size: clamp(9px, 1.1vw, 11px); color: #e0e0e0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tyre-icon {
-      width: 16px; height: 16px; border-radius: 50%; margin-left: 5px;
+      width: 15px; height: 15px; border-radius: 50%; margin-left: 4px;
       display: inline-flex; align-items: center; justify-content: center;
-      font-size: 9px; font-weight: 900; background: #111; flex-shrink: 0;
+      font-size: 8px; font-weight: 900; background: #111; flex-shrink: 0;
     }
     .tyre-S { border: 2px solid #ff2800; color: #ff2800; }
     .tyre-M { border: 2px solid #ffd000; color: #ffd000; }
@@ -156,7 +168,7 @@
     .tyre-I { border: 2px solid #00d64f; color: #00d64f; }
     .tyre-W { border: 2px solid #0090ff; color: #0090ff; }
     .badge-mini {
-      font-size: 9px; font-weight: 900; padding: 1px 3px; border-radius: 2px; margin-left: 4px;
+      font-size: 8px; font-weight: 900; padding: 1px 3px; border-radius: 2px; margin-left: 3px; flex-shrink: 0;
     }
     .badge-pit { background: var(--f1-yellow); color: #000; }
     .badge-out { background: #e10600; color: #fff; }
@@ -166,68 +178,77 @@
        WEATHER WIDGET (BOTTOM LEFT)
     ========================================================= */
     #weather-widget {
-      position: absolute; left: 14px; bottom: 14px; z-index: 22;
+      position: absolute; left: 10px; bottom: 10px; z-index: 22;
       background: var(--f1-panel); border: 1px solid var(--f1-border);
       border-left: 4px solid var(--f1-blue); border-radius: 6px;
-      padding: 8px 12px; width: 205px; font-size: 11px; display: none;
+      padding: 6px 10px; width: clamp(155px, 20vw, 200px); font-size: 10px; display: none;
       box-shadow: 0 8px 24px rgba(0,0,0,0.7);
     }
     body.admin-mode #weather-widget {
-      left: 252px; bottom: 245px;
+      left: 252px; bottom: 245px; width: 200px;
     }
-    .weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
-    .weather-item span { display: block; color: #999; font-size: 9px; }
-    .weather-item strong { font-size: 12px; color: #fff; }
+    .weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 3px; }
+    .weather-item span { display: block; color: #999; font-size: 8px; }
+    .weather-item strong { font-size: 11px; color: #fff; }
 
     /* =========================================================
        FLYING LAP SPOTLIGHT GRAPHIC (FP & QUALIFYING)
     ========================================================= */
     #flying-lap-box {
-      position: absolute; bottom: 86px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: 76px; left: 50%; transform: translateX(-50%);
       z-index: 26; background: rgba(15, 15, 22, 0.95);
       border-top: 3px solid var(--f1-purple); border-radius: 6px;
-      padding: 8px 18px; min-width: 275px; display: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      padding: 7px 16px; min-width: clamp(210px, 32vw, 275px); display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.85);
     }
-    body.admin-mode #flying-lap-box { bottom: 300px; }
-    .fl-header { font-size: 10px; font-weight: 900; color: var(--f1-purple); letter-spacing: 1px; }
-    .fl-main { display: flex; justify-content: space-between; align-items: baseline; margin-top: 3px; gap: 16px; }
-    .fl-drv { font-size: 15px; font-weight: 900; }
-    .fl-time { font-size: 20px; font-weight: 900; font-family: monospace; color: #fff; }
-    .fl-delta { font-size: 13px; font-weight: 900; font-family: monospace; margin-top: 2px; text-align: right; }
+    body.admin-mode #flying-lap-box {
+      bottom: 300px; cursor: pointer; pointer-events: auto;
+    }
+    body.admin-mode #flying-lap-box:hover {
+      border-color: var(--f1-yellow); background: rgba(28, 28, 42, 0.98);
+    }
+    .fl-header {
+      font-size: 9px; font-weight: 900; color: var(--f1-purple);
+      letter-spacing: 0.8px; display: flex; justify-content: space-between; gap: 8px;
+    }
+    .fl-main { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; gap: 14px; }
+    .fl-drv { font-size: clamp(13px, 1.6vw, 15px); font-weight: 900; }
+    .fl-time { font-size: clamp(16px, 2vw, 20px); font-weight: 900; font-family: monospace; color: #fff; }
+    .fl-delta { font-size: 12px; font-weight: 900; font-family: monospace; margin-top: 2px; text-align: right; }
 
     /* =========================================================
        FOCUSED DRIVER BANNER (NAME / POS / TELEMETRY)
     ========================================================= */
     #telemetry-hud {
-      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
       z-index: 24; background: linear-gradient(180deg, rgba(21,21,30,0.95), rgba(10,10,15,0.95));
       border-top: 3px solid var(--f1-red); border-radius: 8px;
-      padding: 7px 18px; display: flex; align-items: center; gap: 18px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.75);
+      padding: 6px 14px; display: flex; align-items: center; gap: clamp(8px, 1.8vw, 18px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.75); white-space: nowrap;
+      max-width: calc(100vw - 24px);
     }
     body.admin-mode #telemetry-hud { bottom: 245px; }
     .tele-pos-box {
-      background: var(--f1-red); color: #fff; font-weight: 900; font-size: 18px;
-      padding: 4px 10px; border-radius: 4px; min-width: 42px; text-align: center;
+      background: var(--f1-red); color: #fff; font-weight: 900; font-size: clamp(14px, 1.8vw, 18px);
+      padding: 3px 8px; border-radius: 4px; min-width: 36px; text-align: center;
     }
-    .tele-drv-name { font-size: 14px; font-weight: 900; }
-    .tele-drv-team { font-size: 10px; color: #aaa; }
-    .tele-speed { font-size: 22px; font-weight: 900; font-family: monospace; }
+    .tele-drv-name { font-size: clamp(12px, 1.5vw, 14px); font-weight: 900; }
+    .tele-drv-team { font-size: 9px; color: #aaa; }
+    .tele-speed { font-size: clamp(17px, 2vw, 22px); font-weight: 900; font-family: monospace; }
 
     /* =========================================================
        VIEWER COLLAPSIBLE CAMERA SWITCHER MENU (BOTTOM RIGHT)
     ========================================================= */
     #viewer-cam-menu-wrap {
-      position: absolute; bottom: 14px; right: 14px; z-index: 28;
-      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+      position: absolute; bottom: 10px; right: 10px; z-index: 28;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
     }
     body.admin-mode #viewer-cam-menu-wrap { display: none; }
 
     #viewer-cam-popup {
       background: var(--f1-panel); border: 1px solid var(--f1-border);
-      border-radius: 8px; padding: 12px; width: 255px;
-      display: none; flex-direction: column; gap: 8px;
+      border-radius: 8px; padding: 10px; width: 240px;
+      display: none; flex-direction: column; gap: 6px;
       box-shadow: 0 12px 32px rgba(0,0,0,0.85);
     }
     #viewer-cam-popup.open { display: flex; }
@@ -236,9 +257,11 @@
        GPS CIRCUIT MAP & PIP ONBOARD FRAME
     ========================================================= */
     #gps-widget {
-      position: absolute; top: 14px; right: 14px; z-index: 20;
+      position: absolute; top: 10px; right: 10px; z-index: 20;
       background: var(--f1-panel); border: 1px solid var(--f1-border);
-      border-radius: 8px; padding: 8px; width: 195px; height: 145px;
+      border-radius: 8px; padding: 6px;
+      width: clamp(130px, 18vw, 190px);
+      height: clamp(95px, 14vw, 140px);
       display: flex; flex-direction: column;
     }
     body.admin-mode #gps-widget {
@@ -246,47 +269,84 @@
       border-radius: 0; border-left: 1px solid #2a2a3a;
       display: flex !important;
     }
-    #gps-canvas { width: 100%; flex: 1; }
+    #gps-canvas { width: 100%; height: 100%; flex: 1; }
 
     #pip-frame {
-      position: absolute; right: 16px; bottom: 64px; z-index: 18;
-      width: 34%; height: 35%; border: 2px solid var(--f1-red);
+      position: absolute; right: 12px; bottom: 56px; z-index: 18;
+      width: 34%; height: 34%; border: 2px solid var(--f1-red);
       border-radius: 6px; pointer-events: none; display: none;
     }
     .pip-header {
-      background: rgba(21, 21, 30, 0.92); padding: 4px 10px;
-      font-size: 11px; font-weight: 800; display: inline-flex; gap: 6px;
+      background: rgba(21, 21, 30, 0.92); padding: 3px 8px;
+      font-size: 10px; font-weight: 800; display: inline-flex; gap: 5px;
       border-bottom-right-radius: 6px;
     }
 
     /* Pit Stop Popup */
     #pit-popup-container {
-      position: absolute; bottom: 85px; left: 230px; z-index: 25;
+      position: absolute; bottom: 80px; left: clamp(170px, 22vw, 225px); z-index: 25;
       display: flex; flex-direction: column; gap: 6px; pointer-events: none;
     }
     body.admin-mode #pit-popup-container { left: 255px; bottom: 300px; }
     .pit-popup {
       background: linear-gradient(90deg, #15151e 0%, #252535 100%);
       border-left: 4px solid var(--f1-yellow); border-radius: 4px;
-      padding: 8px 14px; min-width: 210px; box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+      padding: 6px 12px; min-width: 180px; box-shadow: 0 8px 25px rgba(0,0,0,0.7);
     }
 
     /* 5 Red Lights Gantry */
     #start-lights-panel {
-      position: absolute; top: 55px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: 52px; left: 50%; transform: translateX(-50%);
       background: #111; border: 3px solid #333; border-radius: 12px;
-      padding: 10px 20px; display: none; gap: 14px; z-index: 40;
+      padding: 8px 16px; display: none; gap: 10px; z-index: 40;
       box-shadow: 0 12px 40px rgba(0,0,0,0.9);
     }
     .light-pod {
-      display: flex; flex-direction: column; gap: 6px; background: #050505;
-      padding: 6px; border-radius: 6px; border: 1px solid #222;
+      display: flex; flex-direction: column; gap: 5px; background: #050505;
+      padding: 5px; border-radius: 6px; border: 1px solid #222;
     }
     .red-light {
-      width: 24px; height: 24px; border-radius: 50%; background: #2a0808;
+      width: clamp(18px, 2.5vw, 24px); height: clamp(18px, 2.5vw, 24px);
+      border-radius: 50%; background: #2a0808;
     }
     .red-light.on {
       background: #ff1100; box-shadow: 0 0 20px #ff1100, 0 0 8px #ff7700;
+    }
+
+    /* =========================================================
+       MOBILE / SMALL SCREEN AUTO-FIT ADJUSTMENTS (VIEWER)
+    ========================================================= */
+    @media (max-width: 768px) {
+      body.viewer-mode #timing-tower {
+        width: 142px;
+        top: 46px;
+        left: 6px;
+        max-height: 48dvh;
+      }
+      body.viewer-mode #gps-widget {
+        width: 118px;
+        height: 86px;
+        top: 6px;
+        right: 6px;
+      }
+      body.viewer-mode #weather-widget {
+        display: none !important; /* Keep mobile screen clean */
+      }
+      body.viewer-mode #telemetry-hud {
+        bottom: 48px;
+        padding: 4px 10px;
+        gap: 8px;
+      }
+      body.viewer-mode #flying-lap-box {
+        bottom: 100px;
+        padding: 5px 12px;
+      }
+      body.viewer-mode #pip-frame {
+        width: 42%;
+        height: 26%;
+        right: 8px;
+        bottom: 96px;
+      }
     }
 
     /* =========================================================
@@ -311,7 +371,7 @@
     #admin-studio-deck {
       position: fixed; left: 0; right: 0; bottom: 0; height: 235px;
       background: #14141d; border-top: 3px solid var(--f1-red);
-      display: none; grid-template-columns: 1.3fr 1.45fr 1.25fr 1fr;
+      display: none; grid-template-columns: 1.25fr 1.55fr 1.2fr 1fr;
       gap: 10px; padding: 10px 14px; z-index: 50; overflow-y: auto;
     }
     body.admin-mode #admin-studio-deck { display: grid; }
@@ -336,6 +396,8 @@
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn.active, .btn-red { background: var(--f1-red); border-color: var(--f1-red); }
     .btn-green { background: #009e3c; border-color: #00d64f; }
+    .btn-purple { background: #7b1fa2; border-color: var(--f1-purple); color: #fff; }
+    .btn-purple:hover { background: #9c27b0; }
     .btn-yellow { background: #d4a000; color: #000; border-color: #ffd000; font-weight: 900; }
 
     .url-share-box {
@@ -352,15 +414,15 @@
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,0.75);
       z-index: 200; display: none; align-items: center; justify-content: center;
-      padding: 18px; pointer-events: auto;
+      padding: 14px; pointer-events: auto;
     }
     .modal-card {
       background: #181824; border-top: 5px solid var(--f1-red);
-      border-radius: 8px; max-width: 780px; width: 100%; padding: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.92); max-height: 90vh; overflow-y: auto;
+      border-radius: 8px; max-width: 780px; width: 100%; padding: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.92); max-height: 90dvh; overflow-y: auto;
     }
     .bet-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
       gap: 8px; margin: 12px 0;
     }
     .bet-driver-card {
@@ -411,14 +473,14 @@
 
     <!-- VIEWER COLLAPSIBLE TOP BAR -->
     <div id="viewer-top-bar" class="interactive">
-      <div style="display:flex; gap:8px; align-items:center;">
+      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
         <button id="btn-toggle-top-info" class="top-toggle-btn">
           <span class="live-dot"></span>
           <span id="viewer-compact-session">LIVE</span>
           <span>| 情報・所持金 ▾</span>
         </button>
-        <button id="btn-viewer-sound" class="btn active" style="padding:7px 11px;">🔊 音: ON</button>
-        <button id="btn-floating-bet" class="btn btn-red" style="display:none; padding:7px 14px; font-size:12px;">
+        <button id="btn-viewer-sound" class="btn active" style="padding:6px 10px;">🔊 音: ON</button>
+        <button id="btn-floating-bet" class="btn btn-red" style="display:none; padding:6px 12px; font-size:12px;">
           💰 勝者予想ベット画面を開く
         </button>
       </div>
@@ -477,9 +539,12 @@
       </div>
     </div>
 
-    <!-- FLYING LAP SPOTLIGHT GRAPHIC (FP & QUALIFYING) -->
-    <div id="flying-lap-box">
-      <div class="fl-header">⏱ LIVE FLYING LAP (ATTACK)</div>
+    <!-- FLYING LAP SPOTLIGHT GRAPHIC (FP & QUALIFYING - Visible to Both Admin & Viewers) -->
+    <div id="flying-lap-box" title="クリックでこの計測中選手のカメラへ切替 (主催者のみ)">
+      <div class="fl-header">
+        <span>⏱ LIVE FLYING LAP</span>
+        <span id="fl-admin-hint" style="display:none; color:var(--f1-yellow);">[クリックでカメラ推移]</span>
+      </div>
       <div class="fl-main">
         <span id="fl-drv-label" class="fl-drv">1 VER</span>
         <span id="fl-time-label" class="fl-time">1:12.4</span>
@@ -494,7 +559,7 @@
         <div id="hud-drv-name" class="tele-drv-name">1 M. Verstappen</div>
         <div id="hud-drv-team" class="tele-drv-team">Red Bull Racing</div>
       </div>
-      <div style="text-align:center; min-width:70px;">
+      <div style="text-align:center; min-width:62px;">
         <div id="hud-speed" class="tele-speed">310</div>
         <div style="font-size:9px; color:#aaa;">KM/H | <span id="hud-gear">G8</span></div>
       </div>
@@ -513,7 +578,7 @@
 
     <!-- GPS RADAR WIDGET -->
     <div id="gps-widget">
-      <div style="font-size:10px; font-weight:800; color:#aaa; display:flex; justify-content:space-between;">
+      <div style="font-size:9px; font-weight:800; color:#aaa; display:flex; justify-content:space-between;">
         <span>CIRCUIT GPS</span>
         <span id="gps-rc-status" style="color:var(--f1-green);">GREEN</span>
       </div>
@@ -560,7 +625,7 @@
         <div class="deck-row">
           <button id="btn-start-quali" class="btn btn-red">予選開始</button>
           <button id="btn-end-quali" class="btn">予選終了→ベット</button>
-          <button id="btn-reroll-Random" class="btn" title="能力値を再シャッフルしてFP再開">🎲 新規FP</button>
+          <button id="btn-reroll-random" class="btn" title="能力値を再シャッフルしてFP再開">🎲 新規FP</button>
         </div>
         <div class="deck-row">
           <button id="btn-close-betting" class="btn btn-red">賭け締切 → 0周目</button>
@@ -576,11 +641,15 @@
           <button class="btn cam-mode-btn" data-cam="chase">チェイス</button>
           <button class="btn cam-mode-btn" data-cam="heli">上空ヘリ</button>
           <button class="btn cam-mode-btn" data-cam="onboard">オンボード</button>
-          <button class="btn cam-mode-btn" data-cam="podium">表彰台カメラ</button>
+          <button class="btn cam-mode-btn" data-cam="podium">表彰台</button>
           <button id="btn-admin-all-onboard" class="btn">全12台マルチ: OFF</button>
         </div>
-        <div style="font-size:10px; color:#aaa; margin-top:2px;">国際映像ターゲット選手 (ワンタッチ切替):</div>
-        <div id="admin-driver-keypad" class="deck-row"></div>
+        <div class="deck-row" style="margin-top:2px;">
+          <button id="btn-focus-flying-drv" class="btn btn-purple" style="width:100%; padding:6px 10px;">
+            🎯 計測中の選手へカメラ推移 (-- 待機中)
+          </button>
+        </div>
+        <div id="admin-driver-keypad" class="deck-row" style="margin-top:2px;"></div>
       </div>
 
       <!-- Col 3: Broadcast Overlay ON/OFF Toggles -->
@@ -635,7 +704,7 @@
   <div id="betting-modal" class="modal-backdrop">
     <div class="modal-card">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size:19px;">🏁 予選終了！ スターティンググリッド ＆ 勝者予想ベット</h3>
+        <h3 style="font-size:18px;">🏁 予選終了！ スターティンググリッド ＆ 勝者予想ベット</h3>
         <button class="btn" onclick="document.getElementById('betting-modal').style.display='none'">一時閉じる</button>
       </div>
       <p style="font-size:12px; color:#bbb; margin-top:4px;">
@@ -645,8 +714,8 @@
       <div style="background:#111119; padding:12px; border-radius:6px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
         <div>
           <span style="font-size:12px; color:#aaa;">賭け金設定 (所持金: <strong id="bet-modal-wallet" style="color:var(--f1-yellow);">¥100,000</strong>):</span>
-          <div style="display:flex; align-items:center; gap:6px; margin-top:6px;">
-            <input type="number" id="bet-amount-input" value="10000" min="100" step="1000" style="width:125px; font-size:15px;" />
+          <div style="display:flex; align-items:center; gap:6px; margin-top:6px; flex-wrap:wrap;">
+            <input type="number" id="bet-amount-input" value="10000" min="100" step="1000" style="width:120px; font-size:15px;" />
             <button class="btn quick-bet-btn" data-amt="1000">+1,000</button>
             <button class="btn quick-bet-btn" data-amt="5000">+5,000</button>
             <button class="btn quick-bet-btn" data-amt="10000">+10,000</button>
@@ -661,7 +730,7 @@
   <div id="result-modal" class="modal-backdrop" style="background:rgba(0,0,0,0.45);">
     <div class="modal-card" style="max-width:520px; margin-top:auto; margin-bottom:25px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="font-size:19px;">🏆 表彰式 (PODIUM CEREMONY) ＆ 配当精算</h3>
+        <h3 style="font-size:18px;">🏆 表彰式 (PODIUM CEREMONY) ＆ 配当精算</h3>
         <button id="btn-close-result" class="btn">モーダルを隠して3D表彰台を見る</button>
       </div>
       <div id="result-podium-box" style="margin:10px 0; display:flex; flex-direction:column; gap:6px;"></div>
@@ -671,7 +740,7 @@
 
 <script>
 /* ============================================================================
-   1. 2026 F1 DRIVERS POOL (Skills are randomized every game!)
+   1. 2026 F1 DRIVERS POOL (Skills randomized per game)
 ============================================================================ */
 const ALL_2026_DRIVERS = [
   { num: 1,  code: 'VER', name: 'M. Verstappen', team: 'Red Bull',     color: '#1e41ff', sec: '#ff1801' },
@@ -716,7 +785,6 @@ class F1SoundEngine {
     if (!AudioCtx) return;
     this.ctx = new AudioCtx();
 
-    // Dual-oscillator F1 V6 Hybrid exhaust synth
     this.osc1 = this.ctx.createOscillator();
     this.osc2 = this.ctx.createOscillator();
     this.osc1.type = 'sawtooth';
@@ -762,9 +830,7 @@ class F1SoundEngine {
       this.engineGain.gain.setTargetAtTime(0.0, this.ctx.currentTime, 0.1);
       return;
     }
-    const gear = speedKmh < 5 ? 1 : Math.min(8, Math.max(1, Math.floor(speedKmh / 42) + 1));
     const gearRatioSpeed = (speedKmh % 42) / 42;
-    // Simulate RPM between idle (90Hz) and 15,000 RPM scream (380Hz fundamental)
     const baseFreq = speedKmh < 3
       ? 68 + Math.sin(performance.now() * 0.02) * 5
       : 110 + (speedKmh * 0.55) + (gearRatioSpeed * 85);
@@ -843,13 +909,14 @@ if (!isAdmin && !isValidViewer) {
 if (isAdmin) {
   document.body.classList.remove('viewer-mode');
   document.body.classList.add('admin-mode');
+  document.getElementById('fl-admin-hint').style.display = 'inline';
 }
 
 /* ============================================================================
    4. PARTICIPANT LOCAL STORAGE PROFILE
 ============================================================================ */
-const STORAGE_KEY_NAME = 'f1_bet_player_name_v3';
-const STORAGE_KEY_MONEY = 'f1_bet_player_money_v3';
+const STORAGE_KEY_NAME = 'f1_bet_player_name_v4';
+const STORAGE_KEY_MONEY = 'f1_bet_player_money_v4';
 
 let playerProfile = {
   id: 'plr_' + Math.random().toString(36).substring(2, 10),
@@ -871,7 +938,7 @@ function saveProfile() {
 }
 
 /* ============================================================================
-   5. GAME STATE & CONFIGURATION
+   5. GAME STATE & CONFIGURATION (Includes Synced flyingSpotlight)
 ============================================================================ */
 let gameState = {
   sessionId: 'ses_' + Date.now(),
@@ -901,6 +968,16 @@ let gameState = {
     showGps: true,
     showWeather: true
   },
+  // Synced to all viewers so Flying Lap displays on Participant screens too!
+  flyingSpotlight: {
+    code: null,
+    num: null,
+    status: 'SEARCHING', // SEARCHING, RUNNING, HOLD, COOLDOWN
+    liveSec: 0,
+    holdTimer: 0,
+    finalTime: 0,
+    deltaToP1: 0
+  },
   gridOdds: {},
   drivers: [],
   betsReceived: {}
@@ -914,14 +991,6 @@ let userViewConfig = {
 
 let lastTowerSnapshotTime = 0;
 let towerSnapshotHTML = '';
-
-let flyingSpotlight = {
-  code: null,
-  status: 'SEARCHING', // SEARCHING, RUNNING, HOLD, COOLDOWN
-  holdTimer: 0,
-  finalTime: 0,
-  deltaToP1: 0
-};
 
 function formatLapTime(sec) {
   if (!sec || sec > 500) return '--:--.---';
@@ -985,7 +1054,7 @@ const TRACK_POINTS = [
 
 const mainCurve = new THREE.CatmullRomCurve3(TRACK_POINTS, true, 'centripetal', 0.5);
 const TRACK_SAMPLES = 900;
-const TRACK_WIDTH = 24; // Wide track for multi-lane overtaking
+const TRACK_WIDTH = 24;
 const START_LINE_T = 0.085;
 const TRACK_LENGTH_METERS = 4650;
 
@@ -999,17 +1068,14 @@ for (let i = 0; i < TRACK_SAMPLES; i++) {
   const tan1 = mainCurve.getTangentAt(t1);
   const tan2 = mainCurve.getTangentAt(t2);
   trackCurvature[i] = tan1.angleTo(tan2);
-  const crossY = tan1.x * tan2.z - tan1.z * tan2.x;
-  signedCurvature[i] = crossY;
+  signedCurvature[i] = tan1.x * tan2.z - tan1.z * tan2.x;
 }
 
-// Compute full-width Out-In-Out Racing Line using corner apex and entry/exit
 for (let i = 0; i < TRACK_SAMPLES; i++) {
   const aheadCorner = signedCurvature[(i + 18) % TRACK_SAMPLES];
   const atApex = signedCurvature[i];
   const behindCorner = signedCurvature[(i - 14 + TRACK_SAMPLES) % TRACK_SAMPLES];
 
-  // Dive into apex (inside of turn), swing wide on entry and exit (up to ±8.8m)
   let offset = 0;
   if (Math.abs(atApex) > 0.025) {
     offset = -Math.sign(atApex) * Math.min(8.8, Math.abs(atApex) * 75);
@@ -1019,7 +1085,6 @@ for (let i = 0; i < TRACK_SAMPLES; i++) {
   idealRacingLine[i] = offset;
 }
 
-// Smooth the ideal racing line
 for (let pass = 0; pass < 4; pass++) {
   for (let i = 0; i < TRACK_SAMPLES; i++) {
     const prev = idealRacingLine[(i - 3 + TRACK_SAMPLES) % TRACK_SAMPLES];
@@ -1028,12 +1093,10 @@ for (let pass = 0; pass < 4; pass++) {
   }
 }
 
-// High-speed F1 cornering: Less deceleration in curves!
 function getTargetSpeedAt(t) {
   const idx = Math.floor(((t % 1 + 1) % 1) * TRACK_SAMPLES);
   const lookAheadIdx = (idx + 9) % TRACK_SAMPLES;
   const curv = Math.max(trackCurvature[idx], trackCurvature[lookAheadIdx] * 0.88);
-  // Minimum speed in sharpest hairpins raised to ~182 km/h, sweeping corners ~265-342 km/h
   const factor = Math.max(0, 1 - curv * 1.35);
   return 182 + 162 * Math.pow(factor, 1.15);
 }
@@ -1118,7 +1181,6 @@ function buildElevatedTrackAndDecorations() {
   bankGeo.computeVertexNormals();
   scene.add(new THREE.Mesh(bankGeo, new THREE.MeshLambertMaterial({ color: 0x223d28 })));
 
-  // 3D Raised Kerbs & Guardrails
   const kerbRedMat = new THREE.MeshStandardMaterial({ color: 0xe10600, roughness: 0.5 });
   const kerbWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
   const barrierMat = new THREE.MeshStandardMaterial({ color: 0x8c96a6, metalness: 0.5, roughness: 0.4 });
@@ -1162,7 +1224,6 @@ function buildElevatedTrackAndDecorations() {
     }
   }
 
-  // Sponsor Bridges
   [0.085, 0.35, 0.68].forEach((bt, idx) => {
     const pt = mainCurve.getPointAt(bt);
     const tan = mainCurve.getTangentAt(bt);
@@ -1181,7 +1242,6 @@ function buildElevatedTrackAndDecorations() {
     scene.add(bridgeGroup);
   });
 
-  // Pit Lane & Buildings
   const pitRoad = new THREE.Mesh(
     new THREE.PlaneGeometry(460, 10),
     new THREE.MeshStandardMaterial({ color: 0x1c1d24, roughness: 0.8 })
@@ -1204,7 +1264,6 @@ function buildElevatedTrackAndDecorations() {
   grandStand.position.set(20, 13, 458);
   scene.add(grandStand);
 
-  // Ferris Wheel
   const wheelGroup = new THREE.Group();
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(42, 1.4, 10, 32),
@@ -1227,14 +1286,12 @@ buildElevatedTrackAndDecorations();
    7. 3D PODIUM CEREMONY STAGE & CONFETTI SYSTEM
 ============================================================================ */
 const podiumStageGroup = new THREE.Group();
-const podiumFigures = []; // [p1Group, p2Group, p3Group]
+const podiumFigures = [];
 let confettiParticles = null;
 
 function build3DPodiumStage() {
-  // Position on the main straight apron near Start/Finish line (x=55, y=0, z=401)
   podiumStageGroup.position.set(55, 0.1, 401);
 
-  // Backdrop Board
   const backWall = new THREE.Mesh(
     new THREE.BoxGeometry(16, 7.5, 0.6),
     new THREE.MeshStandardMaterial({ color: 0x12131c, roughness: 0.3 })
@@ -1247,7 +1304,6 @@ function build3DPodiumStage() {
   redHeader.position.set(0, 7.0, -3.2);
   podiumStageGroup.add(backWall, redHeader);
 
-  // P1, P2, P3 Steps
   const stepConfigs = [
     { rank: 1, x: 0,    h: 2.6, col: 0xffd700 },
     { rank: 2, x: -3.6, h: 1.9, col: 0xc0c0c0 },
@@ -1268,7 +1324,6 @@ function build3DPodiumStage() {
     topPlate.position.set(sc.x, sc.h + 0.09, -1.2);
     podiumStageGroup.add(ped, topPlate);
 
-    // Driver Figure + Trophy standing on step
     const figGroup = new THREE.Group();
     const torso = new THREE.Mesh(
       new THREE.CylinderGeometry(0.32, 0.36, 1.45, 12),
@@ -1292,7 +1347,6 @@ function build3DPodiumStage() {
     podiumFigures.push({ figGroup, torso, head, baseY: sc.h + 0.18 });
   });
 
-  // Confetti Particles
   const cCount = 500;
   const cGeo = new THREE.BufferGeometry();
   const cPos = new Float32Array(cCount * 3);
@@ -1319,7 +1373,6 @@ function build3DPodiumStage() {
 }
 build3DPodiumStage();
 
-// Trackside TV Cameras
 const tvCameraPositions = [];
 for (let i = 0; i < 18; i++) {
   const t = i / 18;
@@ -1331,7 +1384,6 @@ for (let i = 0; i < 18; i++) {
   tvCameraPositions.push({ t, pos: camPos });
 }
 
-// Rain Particle System
 const RAIN_COUNT = 2200;
 const rainGeo = new THREE.BufferGeometry();
 const rainPositions = new Float32Array(RAIN_COUNT * 3);
@@ -1481,19 +1533,17 @@ let carMeshes = {};
 
 function selectRandom12WithRandomStats() {
   const chosen = [...ALL_2026_DRIVERS].sort(() => Math.random() - 0.5).slice(0, 12);
-  // Create a balanced but unpredictable pool of skills (Top contenders, Midfield, Slightly slower cars)
-  // Nobody is fixed by name (VER is just as likely to get a midfield or slightly slower stat as anyone else)
   const skillPool = [
-    1.004, 1.001, 0.998, 0.995, // Front runners (very close!)
-    0.989, 0.986, 0.982, 0.978, // Competitive midfield
-    0.971, 0.966, 0.958, 0.952  // Slightly slower cars, but not extreme
+    1.004, 1.001, 0.998, 0.995,
+    0.989, 0.986, 0.982, 0.978,
+    0.971, 0.966, 0.958, 0.952
   ].sort(() => Math.random() - 0.5);
 
   return chosen.map((d, i) => ({
     ...d,
     skill: skillPool[i] + (Math.random() * 0.006 - 0.003),
-    racePaceFactor: 0.992 + Math.random() * 0.018, // Dynamic race pace variance
-    linePreference: (Math.random() - 0.5) * 3.6    // Individual line offset preference
+    racePaceFactor: 0.992 + Math.random() * 0.018,
+    linePreference: (Math.random() - 0.5) * 3.6
   }));
 }
 
@@ -1505,7 +1555,6 @@ function initDriversList(selectedDriversData) {
   const defaultCompound = gameState.weather.condition === 'DRY' ? 'S' : (gameState.weather.condition === 'LIGHT_RAIN' ? 'I' : 'W');
   gameState.drivers = selectedDriversData.map((d, idx) => {
     const startT = (START_LINE_T - (idx + 1) * 0.025 + 1) % 1;
-    // In FP/Quali, alternate initial flying lap vs out-lap so some cars yield right away
     const isFlying = idx % 3 !== 2;
     const drvObj = {
       ...d,
@@ -1528,7 +1577,7 @@ function initDriversList(selectedDriversData) {
       tyreLife: 100,
       ers: 100,
       momActive: false,
-      isFlyingLap: isFlying, // True = Attacking, False = Out-Lap / Cool-Down yielding at track edge
+      isFlyingLap: isFlying,
       yieldingToFastCar: false,
       inPit: false,
       pitStage: 0,
@@ -1633,6 +1682,7 @@ function updateSimulation(dt) {
   const wCond = gameState.weather.condition;
   const isWetTrack = wCond !== 'DRY';
   const isPracticeOrQuali = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
+  const sp = gameState.flyingSpotlight;
 
   gameState.drivers.forEach((drv, i) => {
     if (drv.crashed) {
@@ -1710,26 +1760,22 @@ function updateSimulation(dt) {
         if (drv.t > 0.145) {
           drv.inPit = false;
           drv.pitStage = 0;
-          drv.isFlyingLap = false; // Out-lap after pit stop
+          drv.isFlyingLap = false;
         }
       }
       return;
     }
 
-    // Base Target Speed (Less deceleration in corners!)
     let baseTargetSpeed = getTargetSpeedAt(drv.t);
     const sampleIdx = Math.floor(((drv.t % 1 + 1) % 1) * TRACK_SAMPLES);
     const idealLine = idealRacingLine[sampleIdx];
 
-    // Check FP / Qualifying Non-Timed Lap (Out-Lap / Cool-Down) or Finished Post-Race Lap
     drv.yieldingToFastCar = false;
     if ((isPracticeOrQuali && !drv.isFlyingLap) || drv.finished) {
-      // Slow down & pull over to the far edge of the circuit opposite to the racing line!
       baseTargetSpeed = Math.min(baseTargetSpeed * 0.62, 165);
       const safeEdge = idealLine > 0 ? -9.5 : 9.5;
       drv.targetLane = safeEdge;
 
-      // Check if an attacking car is approaching from behind to yield even more strictly
       gameState.drivers.forEach(other => {
         if (other.code === drv.code || !other.isFlyingLap || other.inPit || other.crashed) return;
         const behindDistT = (drv.t - other.t + 1) % 1;
@@ -1740,11 +1786,9 @@ function updateSimulation(dt) {
         }
       });
     } else {
-      // Active Flying Lap or Race Lap: Use full track width Out-In-Out racing line + driver preference
       drv.targetLane = Math.max(-9.5, Math.min(9.5, idealLine + drv.linePreference * 0.45));
     }
 
-    // Tyre & Weather Grip
     let tyreGrip = 1.0;
     if (wCond === 'DRY') {
       tyreGrip = drv.tyre === 'S' ? 1.03 : (drv.tyre === 'M' ? 1.0 : (drv.tyre === 'H' ? 0.98 : 0.86));
@@ -1755,7 +1799,6 @@ function updateSimulation(dt) {
     }
     const wearPenalty = 1.0 - ((100 - drv.tyreLife) * 0.001);
 
-    // Find Car Ahead for Slipstream & Wide-Track Overtaking
     let carAhead = null;
     let minGapT = 1.0;
     gameState.drivers.forEach(other => {
@@ -1768,12 +1811,8 @@ function updateSimulation(dt) {
     });
 
     drv.momActive = false;
-    // Slipstream & Multi-Lane Overtaking Logic
     if (carAhead && minGapT < 0.036 && (!isPracticeOrQuali || drv.isFlyingLap) && !drv.finished) {
-      // Slipstream tow boost on straights and fast bends
       baseTargetSpeed += 14;
-
-      // Pick wide overtaking lane (left or right side of the car ahead using the full 24m track width)
       if (Math.abs(carAhead.laneOffset - drv.laneOffset) < 3.4) {
         const roomLeft = 9.6 - carAhead.laneOffset;
         const roomRight = carAhead.laneOffset - (-9.6);
@@ -1784,7 +1823,6 @@ function updateSimulation(dt) {
         }
       }
 
-      // OVERTAKE MODE (MOM): Strictly in RACE + GREEN flag
       if (gameState.phase === 'RACE' && gameState.raceControl === 'GREEN' && drv.ers > 15 && baseTargetSpeed > 210) {
         drv.momActive = true;
         drv.ers = Math.max(0, drv.ers - dt * 15);
@@ -1794,7 +1832,6 @@ function updateSimulation(dt) {
       if (baseTargetSpeed < 220) drv.ers = Math.min(100, drv.ers + dt * 15);
     }
 
-    // Safety Car / VSC Speed Cap
     if (gameState.raceControl === 'VSC') {
       baseTargetSpeed = Math.min(baseTargetSpeed, 160);
     } else if (gameState.raceControl === 'SC') {
@@ -1805,10 +1842,8 @@ function updateSimulation(dt) {
       }
     }
 
-    // Responsive Lateral Steering across full width
     drv.laneOffset += (drv.targetLane - drv.laneOffset) * Math.min(1, dt * 4.5);
 
-    // Dynamic form fluctuation so the race remains unpredictable until the final lap
     const dynamicWave = 0.986 + Math.sin(now * 0.0012 + i * 1.7) * 0.024;
     const effectiveSkill = drv.skill * (gameState.phase === 'RACE' ? drv.racePaceFactor : 1.0);
     const desiredSpeed = baseTargetSpeed * effectiveSkill * tyreGrip * wearPenalty * dynamicWave;
@@ -1828,7 +1863,6 @@ function updateSimulation(dt) {
     const degRate = drv.tyre === 'S' ? 2.4 : 1.5;
     drv.tyreLife = Math.max(5, drv.tyreLife - dT * 11 * degRate);
 
-    // Pit Entry Decision
     const wrongTyreForWeather =
       (isWetTrack && drv.tyre !== 'I' && drv.tyre !== 'W') ||
       (!isWetTrack && (drv.tyre === 'I' || drv.tyre === 'W'));
@@ -1853,23 +1887,20 @@ function updateSimulation(dt) {
           if (!drv.bestLapTime || simTime < drv.bestLapTime) {
             drv.bestLapTime = simTime;
           }
-          if (flyingSpotlight.code === drv.code && flyingSpotlight.status === 'RUNNING') {
+          if (sp.code === drv.code && sp.status === 'RUNNING') {
             const bestOverall = Math.min(...gameState.drivers.map(d => d.bestLapTime || 999));
-            flyingSpotlight.finalTime = simTime;
-            flyingSpotlight.deltaToP1 = simTime - bestOverall;
-            flyingSpotlight.status = 'HOLD';
-            flyingSpotlight.holdTimer = 2.8;
+            sp.finalTime = simTime;
+            sp.deltaToP1 = simTime - bestOverall;
+            sp.status = 'HOLD';
+            sp.holdTimer = 2.8;
           }
-          // After completing a flying lap, switch to a cool-down / recharging lap (yielding at edge)
           drv.isFlyingLap = Math.random() < 0.35;
         } else {
-          // Completed out-lap / cool-down lap -> start flying attack lap!
           drv.isFlyingLap = true;
         }
         forceTimingTowerRefresh();
       } else if (gameState.phase === 'RACE' && !drv.finished) {
         drv.lap += 1;
-        // Re-randomize racePaceFactor slightly each lap for exciting multi-car battles!
         drv.racePaceFactor = 0.988 + Math.random() * 0.026;
 
         if (drv.lap > gameState.totalRaceLaps) {
@@ -1884,14 +1915,13 @@ function updateSimulation(dt) {
     }
   });
 
-  // CAR-TO-CAR COLLISION DETECTION (Only in Race or between attacking cars)
+  // CAR-TO-CAR COLLISION DETECTION
   if (gameState.raceControl === 'GREEN' && (gameState.phase === 'RACE' || isPracticeOrQuali)) {
     const activeCars = gameState.drivers.filter(d => !d.inPit && !d.crashed && !d.finished && d.speed > 100);
     for (let a = 0; a < activeCars.length; a++) {
       for (let b = a + 1; b < activeCars.length; b++) {
         const c1 = activeCars[a];
         const c2 = activeCars[b];
-        // Non-attacking yielding cars in FP/Quali ghost cleanly if at track edge
         if (isPracticeOrQuali && (!c1.isFlyingLap || !c2.isFlyingLap)) continue;
 
         let diffT = Math.abs(c1.t - c2.t);
@@ -1923,7 +1953,6 @@ function updateSimulation(dt) {
     }
   }
 
-  // Sort Standings: FP/Quali = Best Time Order, Race = Real-time Race Position (Finished locked at top, Crashed at bottom)
   sortDriversByCurrentStandings();
 
   if (gameState.phase === 'RACE') {
@@ -1931,7 +1960,7 @@ function updateSimulation(dt) {
     gameState.raceLap = Math.max(1, maxL);
   }
 
-  updateFlyingLapSpotlight(dt);
+  updateFlyingLapSpotlightState(dt);
 }
 
 function sortDriversByCurrentStandings() {
@@ -1946,7 +1975,6 @@ function sortDriversByCurrentStandings() {
   } else if (gameState.phase === 'BETTING' || gameState.phase === 'FORMATION_LAP' || gameState.phase === 'FIVE_LIGHTS') {
     gameState.drivers.sort((a, b) => a.gridPos - b.gridPos);
   } else {
-    // RACE or PODIUM: Real-time race order (Finished order locked -> Active totalDist -> Crashed)
     gameState.drivers.sort((a, b) => {
       if (a.finished && b.finished) return a.finishOrder - b.finishOrder;
       if (a.finished !== b.finished) return a.finished ? -1 : 1;
@@ -1963,39 +1991,37 @@ function sortDriversByCurrentStandings() {
 }
 
 /* ============================================================================
-   10. FLYING LAP SPOTLIGHT LOGIC (Respects Admin Show/Hide Toggle)
+   10. FLYING LAP SPOTLIGHT STATE (Synced to Viewers & Admin Switch Button)
 ============================================================================ */
-function updateFlyingLapSpotlight(dt) {
-  const box = document.getElementById('flying-lap-box');
+function updateFlyingLapSpotlightState(dt) {
+  const sp = gameState.flyingSpotlight;
   const isPracticeOrQuali = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
 
-  if (!isPracticeOrQuali || !gameState.broadcast.showFlyingLap) {
-    box.style.display = 'none';
-    if (!isPracticeOrQuali) flyingSpotlight.status = 'SEARCHING';
+  if (!isPracticeOrQuali) {
+    sp.status = 'SEARCHING';
+    sp.code = null;
     return;
   }
 
-  if (flyingSpotlight.status === 'HOLD') {
-    box.style.display = 'block';
-    flyingSpotlight.holdTimer -= dt;
-    if (flyingSpotlight.holdTimer <= 0) {
-      flyingSpotlight.status = 'COOLDOWN';
-      flyingSpotlight.holdTimer = 0.7;
-      box.style.display = 'none';
+  if (sp.status === 'HOLD') {
+    sp.holdTimer -= dt;
+    if (sp.holdTimer <= 0) {
+      sp.status = 'COOLDOWN';
+      sp.holdTimer = 0.7;
+      sp.code = null;
     }
     return;
   }
 
-  if (flyingSpotlight.status === 'COOLDOWN') {
-    flyingSpotlight.holdTimer -= dt;
-    if (flyingSpotlight.holdTimer <= 0) {
-      flyingSpotlight.status = 'SEARCHING';
+  if (sp.status === 'COOLDOWN') {
+    sp.holdTimer -= dt;
+    if (sp.holdTimer <= 0) {
+      sp.status = 'SEARCHING';
     }
     return;
   }
 
-  if (flyingSpotlight.status === 'SEARCHING') {
-    // Pick attacking driver (`isFlyingLap === true`) closest to Finish Line
+  if (sp.status === 'SEARCHING') {
     let bestCandidate = null;
     let minRemainingT = 1.0;
     gameState.drivers.forEach(d => {
@@ -2007,41 +2033,48 @@ function updateFlyingLapSpotlight(dt) {
       }
     });
     if (bestCandidate) {
-      flyingSpotlight.code = bestCandidate.code;
-      flyingSpotlight.status = 'RUNNING';
+      sp.code = bestCandidate.code;
+      sp.num = bestCandidate.num;
+      sp.status = 'RUNNING';
     } else {
-      box.style.display = 'none';
+      sp.code = null;
       return;
     }
   }
 
-  if (flyingSpotlight.status === 'RUNNING') {
-    const drv = gameState.drivers.find(d => d.code === flyingSpotlight.code);
+  if (sp.status === 'RUNNING') {
+    const drv = gameState.drivers.find(d => d.code === sp.code);
     if (!drv || drv.inPit || drv.crashed || !drv.isFlyingLap) {
-      flyingSpotlight.status = 'SEARCHING';
-      box.style.display = 'none';
+      sp.status = 'SEARCHING';
+      sp.code = null;
       return;
     }
-    box.style.display = 'block';
     const remT = (START_LINE_T - drv.t + 1) % 1;
     const progress = 1 - remT;
-    const liveLapSec = Math.max(0, progress * 74.2);
-    document.getElementById('fl-drv-label').textContent = `#${drv.num} ${drv.code}`;
-    document.getElementById('fl-time-label').textContent = formatLapTime(liveLapSec);
-    document.getElementById('fl-delta-label').textContent = 'FLYING LAP ATTACK...';
-    document.getElementById('fl-delta-label').style.color = '#aaa';
+    sp.liveSec = Math.max(0, progress * 74.2);
+    sp.num = drv.num;
+  }
+}
+
+// Switch International Broadcast Camera to the Currently Measured Driver
+function focusBroadcastOnFlyingLapDriver() {
+  if (!isAdmin) return;
+  const sp = gameState.flyingSpotlight;
+  if (sp && sp.code) {
+    gameState.broadcast.targetCode = sp.code;
+    highlightAdminDriverButtons();
+    forceTimingTowerRefresh();
   }
 }
 
 /* ============================================================================
-   11. 3D MESH TRANSFORMS, PODIUM CEREMONY & RENDERING
+   11. 3D MESH TRANSFORMS, AUTO-FOV DEVICE FITTING & RENDERING
 ============================================================================ */
 function syncCarMeshesTo3D() {
   const now = performance.now();
 
   if (gameState.phase === 'PODIUM') {
     podiumStageGroup.visible = true;
-    // Animate Podium Figures & Confetti
     const top3 = gameState.drivers.slice(0, 3);
     podiumFigures.forEach((pf, idx) => {
       const drv = top3[idx];
@@ -2062,7 +2095,6 @@ function syncCarMeshesTo3D() {
       posAttr.needsUpdate = true;
     }
 
-    // Park Top 3 F1 Cars proudly in front of the Podium Stage
     const podiumCarOffsets = [
       { x: 55, z: 406.5, yaw: Math.PI * 0.85 },
       { x: 49, z: 407.5, yaw: Math.PI * 0.75 },
@@ -2076,7 +2108,6 @@ function syncCarMeshesTo3D() {
         m.group.position.set(spot.x, 0.12, spot.z);
         m.group.rotation.set(0, spot.yaw, 0);
       } else {
-        // Park remaining cars neatly in pit lane
         m.group.position.set(-120 + idx * 14, 0.08, 395);
         m.group.rotation.set(0, Math.PI / 2, 0);
       }
@@ -2143,6 +2174,21 @@ function syncCarMeshesTo3D() {
   }
 }
 
+// Automatically compute vertical FOV so horizontal view never gets cropped on narrow/mobile screens
+function applyDeviceResponsiveFOV(camera, baseFov, aspect) {
+  const referenceAspect = 16 / 9;
+  if (aspect < referenceAspect) {
+    const rad = THREE.MathUtils.degToRad(baseFov);
+    const hFov = 2 * Math.atan(Math.tan(rad / 2) * referenceAspect);
+    const newVFov = 2 * Math.atan(Math.tan(hFov / 2) / Math.max(0.48, aspect));
+    camera.fov = Math.min(92, THREE.MathUtils.radToDeg(newVFov));
+  } else {
+    camera.fov = baseFov;
+  }
+  camera.aspect = aspect;
+  camera.updateProjectionMatrix();
+}
+
 function positionCameraForDriver(camera, drv, mode) {
   if (gameState.phase === 'PODIUM' || mode === 'podium') {
     const tNow = performance.now() * 0.0004;
@@ -2186,13 +2232,27 @@ function positionCameraForDriver(camera, drv, mode) {
   }
 }
 
-function renderScene() {
+function resizeRendererToContainer() {
   const rect = container.getBoundingClientRect();
   const W = Math.max(100, Math.floor(rect.width));
   const H = Math.max(100, Math.floor(rect.height));
-  if (renderer.domElement.width !== W * renderer.getPixelRatio() || renderer.domElement.height !== H * renderer.getPixelRatio()) {
+  const pr = Math.min(window.devicePixelRatio || 1, 2);
+  if (renderer.domElement.width !== Math.floor(W * pr) || renderer.domElement.height !== Math.floor(H * pr)) {
+    renderer.setPixelRatio(pr);
     renderer.setSize(W, H, false);
   }
+  return { W, H };
+}
+
+if (typeof ResizeObserver !== 'undefined') {
+  new ResizeObserver(() => resizeRendererToContainer()).observe(container);
+}
+window.addEventListener('resize', resizeRendererToContainer);
+window.addEventListener('orientationchange', () => setTimeout(resizeRendererToContainer, 100));
+
+function renderScene() {
+  const { W, H } = resizeRendererToContainer();
+  const mainAspect = W / H;
 
   const pipFrame = document.getElementById('pip-frame');
   const worldTargetDrv = gameState.drivers.find(d => d.code === gameState.broadcast.targetCode) || gameState.drivers[0];
@@ -2212,8 +2272,7 @@ function renderScene() {
       const y = H - (r + 1) * cellH;
       renderer.setViewport(x, y, cellW - 2, cellH - 2);
       renderer.setScissor(x, y, cellW - 2, cellH - 2);
-      pipCamera.aspect = cellW / cellH;
-      pipCamera.updateProjectionMatrix();
+      applyDeviceResponsiveFOV(pipCamera, 62, cellW / cellH);
       positionCameraForDriver(pipCamera, drv, 'onboard');
       renderer.render(scene, pipCamera);
     });
@@ -2224,44 +2283,43 @@ function renderScene() {
     pipFrame.style.display = 'none';
     renderer.setViewport(0, 0, W, H);
     renderer.setScissor(0, 0, W, H);
-    worldCamera.aspect = W / H;
-    worldCamera.updateProjectionMatrix();
+    applyDeviceResponsiveFOV(worldCamera, 50, mainAspect);
     positionCameraForDriver(worldCamera, worldTargetDrv, gameState.broadcast.cameraMode);
     renderer.render(scene, worldCamera);
   } else if (userViewConfig.layout === 'onboard') {
     pipFrame.style.display = 'none';
     renderer.setViewport(0, 0, W, H);
     renderer.setScissor(0, 0, W, H);
-    pipCamera.aspect = W / H;
-    pipCamera.updateProjectionMatrix();
+    applyDeviceResponsiveFOV(pipCamera, 62, mainAspect);
     positionCameraForDriver(pipCamera, userOnboardDrv, 'onboard');
     renderer.render(scene, pipCamera);
   } else {
     renderer.setViewport(0, 0, W, H);
     renderer.setScissor(0, 0, W, H);
-    worldCamera.aspect = W / H;
-    worldCamera.updateProjectionMatrix();
+    applyDeviceResponsiveFOV(worldCamera, 50, mainAspect);
     positionCameraForDriver(worldCamera, worldTargetDrv, gameState.broadcast.cameraMode);
     renderer.render(scene, worldCamera);
 
-    const pipW = Math.floor(W * 0.34);
-    const pipH = Math.floor(H * 0.35);
-    const pipX = W - pipW - 16;
-    const pipY = 64;
+    // Responsive PiP Viewport matching #pip-frame CSS box
+    const pipRect = pipFrame.getBoundingClientRect();
     pipFrame.style.display = 'block';
+    const pRect = pipFrame.getBoundingClientRect();
+    const pipW = Math.max(80, Math.floor(pRect.width));
+    const pipH = Math.max(60, Math.floor(pRect.height));
+    const pipX = Math.floor(pRect.left);
+    const pipY = Math.floor(H - pRect.bottom);
     document.getElementById('pip-driver-label').textContent = `#${userOnboardDrv?.num || ''} ${userOnboardDrv?.code || ''}`;
 
     renderer.setViewport(pipX, pipY, pipW, pipH);
     renderer.setScissor(pipX, pipY, pipW, pipH);
-    pipCamera.aspect = pipW / pipH;
-    pipCamera.updateProjectionMatrix();
+    applyDeviceResponsiveFOV(pipCamera, 62, pipW / pipH);
     positionCameraForDriver(pipCamera, userOnboardDrv, 'onboard');
     renderer.render(scene, pipCamera);
   }
 }
 
 /* ============================================================================
-   12. LIVE TIMING TOWER (Current Time Order / Real-time Race Order)
+   12. LIVE TIMING TOWER (SLOW badge shown ONLY on Admin side)
 ============================================================================ */
 function buildTimingTowerHTML() {
   sortDriversByCurrentStandings();
@@ -2276,7 +2334,7 @@ function buildTimingTowerHTML() {
     } else if (gameState.broadcast.showTimes || isAdmin) {
       if (isPracticeOrQuali) {
         if (!drv.bestLapTime) {
-          timeStr = drv.isFlyingLap ? 'FLYING' : 'OUT LAP';
+          timeStr = 'NO TIME';
         } else if (idx === 0) {
           timeStr = formatLapTime(drv.bestLapTime);
         } else {
@@ -2296,7 +2354,8 @@ function buildTimingTowerHTML() {
       ? `<span class="tyre-icon tyre-${drv.tyre}">${drv.tyre}</span>`
       : '';
     const pitHtml = drv.inPit ? `<span class="badge-mini badge-pit">PIT</span>` : '';
-    const yieldHtml = (isPracticeOrQuali && !drv.isFlyingLap && !drv.inPit && !drv.crashed)
+    // SLOW badge is strictly ONLY rendered for Admin! Participants never see SLOW.
+    const yieldHtml = (isAdmin && isPracticeOrQuali && !drv.isFlyingLap && !drv.inPit && !drv.crashed)
       ? `<span class="badge-mini badge-yield" title="非計測・道譲り走行中">SLOW</span>`
       : '';
     const flagHtml = drv.finished ? ' 🏁' : '';
@@ -2361,7 +2420,6 @@ function drawGpsMap() {
 function updateUI() {
   const now = performance.now();
 
-  // Keep positions sorted in real-time and update tower every 5 seconds
   sortDriversByCurrentStandings();
   if (now - lastTowerSnapshotTime >= 5000 || !towerSnapshotHTML) {
     forceTimingTowerRefresh();
@@ -2463,32 +2521,52 @@ function updateUI() {
       momEl.style.background = '#222';
       momEl.style.color = '#777';
     }
-    // Update Web Audio Engine pitch based on focused car speed
     soundEngine.updateEngine(hudDrv.speed, gameState.phase);
   }
 
-  if (flyingSpotlight.status === 'HOLD' && gameState.broadcast.showFlyingLap) {
-    const drv = gameState.drivers.find(d => d.code === flyingSpotlight.code);
-    if (drv) {
-      document.getElementById('fl-drv-label').textContent = `#${drv.num} ${drv.code}`;
-      document.getElementById('fl-time-label').textContent = formatLapTime(flyingSpotlight.finalTime);
-      const dEl = document.getElementById('fl-delta-label');
-      const diff = flyingSpotlight.deltaToP1;
-      if (diff <= 0.001) {
-        dEl.textContent = `P1 FASTEST LAP`;
+  // Render Flying Lap Box on BOTH Admin and Participant screens using synced gameState.flyingSpotlight
+  const flBox = document.getElementById('flying-lap-box');
+  const focusFlyingBtn = document.getElementById('btn-focus-flying-drv');
+  const isPQ = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
+  const sp = gameState.flyingSpotlight;
+
+  if (isPQ && gameState.broadcast.showFlyingLap && sp && sp.code && (sp.status === 'RUNNING' || sp.status === 'HOLD')) {
+    flBox.style.display = 'block';
+    document.getElementById('fl-drv-label').textContent = `#${sp.num || ''} ${sp.code}`;
+    const dEl = document.getElementById('fl-delta-label');
+    if (sp.status === 'RUNNING') {
+      document.getElementById('fl-time-label').textContent = formatLapTime(sp.liveSec);
+      dEl.textContent = 'FLYING LAP ATTACK...';
+      dEl.style.color = '#aaa';
+    } else if (sp.status === 'HOLD') {
+      document.getElementById('fl-time-label').textContent = formatLapTime(sp.finalTime);
+      if (sp.deltaToP1 <= 0.001) {
+        dEl.textContent = 'P1 FASTEST LAP';
         dEl.style.color = 'var(--f1-purple)';
       } else {
-        dEl.textContent = `1位との差: +${diff.toFixed(3)}s`;
+        dEl.textContent = `1位との差: +${sp.deltaToP1.toFixed(3)}s`;
         dEl.style.color = 'var(--f1-yellow)';
       }
+    }
+  } else {
+    flBox.style.display = 'none';
+  }
+
+  // Update Admin's "Focus on Flying Lap Driver" Button Label
+  if (isAdmin && focusFlyingBtn) {
+    if (isPQ && sp && sp.code) {
+      focusFlyingBtn.disabled = false;
+      focusFlyingBtn.textContent = `🎯 計測中の選手へカメラ推移 (#${sp.num || ''} ${sp.code})`;
+    } else {
+      focusFlyingBtn.disabled = true;
+      focusFlyingBtn.textContent = `🎯 計測中の選手へカメラ推移 (-- 待機中)`;
     }
   }
 
   if (isAdmin) {
-    const isPQ = (gameState.phase === 'FREE_PRACTICE' || gameState.phase === 'QUALIFYING');
     const adminList = document.getElementById('admin-live-stats-list');
     adminList.innerHTML = gameState.drivers.map(d => {
-      const stateTag = d.crashed ? 'CRASH' : (d.finished ? 'FIN 🏁' : (isPQ ? (d.isFlyingLap ? 'ATTACK' : 'YIELD(端)') : `${Math.round(d.speed)}km/h`));
+      const stateTag = d.crashed ? 'CRASH' : (d.finished ? 'FIN 🏁' : (isPQ ? (d.isFlyingLap ? 'ATTACK' : 'SLOW(端)') : `${Math.round(d.speed)}km/h`));
       return `
         <div style="display:flex; justify-content:space-between; border-bottom:1px solid #222; padding:2px 0;">
           <span><strong>P${d.pos} ${d.code}</strong> (${d.tyre} ${Math.round(d.tyreLife)}%)</span>
@@ -2711,7 +2789,6 @@ function startRaceSession() {
 }
 
 function checkAllDriversFinished() {
-  // Wait until ALL non-crashed cars have crossed the finish line and received their checkered flag!
   const stillRunning = gameState.drivers.filter(d => !d.crashed && !d.finished);
   if (stillRunning.length === 0 && gameState.phase === 'RACE') {
     setTimeout(() => {
@@ -2785,12 +2862,12 @@ function showRaceResultAndSettleBet(top3) {
 }
 
 /* ============================================================================
-   14. P2P NETWORKING
+   14. P2P NETWORKING (Syncs flyingSpotlight to Viewers)
 ============================================================================ */
 let peer = null;
 let peerConnections = [];
 let hostConn = null;
-const localChannel = new BroadcastChannel('f1_p2p_channel_2026_v3');
+const localChannel = new BroadcastChannel('f1_p2p_channel_2026_v4');
 
 function initNetworking() {
   localChannel.onmessage = (ev) => handleNetworkPacket(ev.data);
@@ -2861,6 +2938,9 @@ function handleNetworkPacket(pkt) {
     gameState.scTrackT = pkt.state.scTrackT;
     gameState.weather = pkt.state.weather;
     gameState.broadcast = pkt.state.broadcast;
+    if (pkt.state.flyingSpotlight) {
+      gameState.flyingSpotlight = pkt.state.flyingSpotlight;
+    }
     gameState.gridOdds = pkt.state.gridOdds || gameState.gridOdds;
 
     pkt.state.drivers.forEach(sd => {
@@ -2919,6 +2999,7 @@ setInterval(() => {
         scTrackT: gameState.scTrackT,
         weather: gameState.weather,
         broadcast: gameState.broadcast,
+        flyingSpotlight: gameState.flyingSpotlight,
         gridOdds: gameState.gridOdds,
         drivers: gameState.drivers
       }
@@ -2941,7 +3022,6 @@ document.getElementById('btn-save-name').addEventListener('click', () => {
   document.getElementById('name-modal').style.display = 'none';
 });
 
-// Sound Toggle Buttons
 function handleSoundToggle() {
   const on = soundEngine.toggle();
   const aBtn = document.getElementById('btn-admin-sound');
@@ -2979,7 +3059,7 @@ document.getElementById('race-laps-input').addEventListener('change', (e) => {
   gameState.totalRaceLaps = Math.max(1, parseInt(e.target.value || '5', 10));
 });
 
-document.getElementById('btn-reroll-Random').addEventListener('click', () => {
+document.getElementById('btn-reroll-random').addEventListener('click', () => {
   initDriversList(selectRandom12WithRandomStats());
   gameState.phase = 'FREE_PRACTICE';
   gameState.broadcast.cameraMode = 'track';
@@ -3018,6 +3098,10 @@ document.getElementById('btn-close-betting').addEventListener('click', () => {
 document.getElementById('btn-five-lights').addEventListener('click', () => {
   triggerFiveLightsStart();
 });
+
+// Admin Button & Flying Lap Box Click to Switch Camera to Currently Measured Driver
+document.getElementById('btn-focus-flying-drv').addEventListener('click', focusBroadcastOnFlyingLapDriver);
+document.getElementById('flying-lap-box').addEventListener('click', focusBroadcastOnFlyingLapDriver);
 
 document.querySelectorAll('.cam-mode-btn').forEach(btn => {
   btn.addEventListener('click', () => {
