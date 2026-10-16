@@ -1,0 +1,1962 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>F1 GRAND PRIX BETTING & BROADCAST SIMULATOR 2026</title>
+  <!-- Three.js & PeerJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <style>
+    :root {
+      --f1-red: #e10600;
+      --f1-dark: #15151e;
+      --f1-panel: rgba(21, 21, 30, 0.88);
+      --f1-border: rgba(255, 255, 255, 0.14);
+      --f1-purple: #b138ff;
+      --f1-green: #00d64f;
+      --f1-yellow: #ffd000;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body, html {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #0b0b10; color: #fff;
+      font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    }
+    #canvas-container {
+      position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+
+    /* F1TV Overlay Layer */
+    #ui-layer {
+      position: absolute; inset: 0; z-index: 10; pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .interactive { pointer-events: auto; }
+
+    /* Top Broadcast Header */
+    #top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 18px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+    }
+    .f1-logo-box {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .f1-badge {
+      background: var(--f1-red); color: #fff; font-weight: 900; font-style: italic;
+      padding: 5px 12px; border-radius: 4px; letter-spacing: 1px; font-size: 18px;
+    }
+    .session-pill {
+      background: rgba(21,21,30,0.92); border-left: 4px solid var(--f1-red);
+      padding: 6px 14px; font-weight: 700; font-size: 14px; letter-spacing: 0.5px;
+      display: flex; align-items: center; gap: 12px; border-radius: 0 4px 4px 0;
+    }
+    .session-timer { color: var(--f1-yellow); font-family: monospace; font-size: 16px; }
+
+    .user-wallet-box {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--f1-panel); border: 1px solid var(--f1-border);
+      padding: 6px 14px; border-radius: 6px; font-size: 13px;
+    }
+    .wallet-amount { color: var(--f1-yellow); font-weight: 800; font-size: 16px; font-family: monospace; }
+
+    /* Left Timing Tower (F1 Broadcast Graphics) */
+    #main-area {
+      flex: 1; display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 8px 18px; position: relative; overflow: hidden;
+    }
+    #timing-tower {
+      width: 285px; background: rgba(15, 15, 22, 0.9);
+      border-top: 4px solid var(--f1-red); border-radius: 0 0 8px 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6); overflow: hidden;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #timing-tower.hidden-tower { opacity: 0; transform: translateX(-310px); pointer-events: none; }
+    .tower-header {
+      background: #1f1f2c; padding: 7px 12px; font-size: 12px; font-weight: 800;
+      display: flex; justify-content: space-between; letter-spacing: 1px; color: #bbb;
+    }
+    .tower-row {
+      display: flex; align-items: center; padding: 5px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .tower-row:hover { background: rgba(255,255,255,0.1); }
+    .tower-row.focused { background: rgba(225, 6, 0, 0.28); }
+    .pos-num { width: 24px; font-weight: 800; text-align: center; font-size: 12px; }
+    .team-stripe { width: 4px; height: 18px; margin: 0 8px; border-radius: 2px; }
+    .drv-code { font-weight: 800; width: 44px; letter-spacing: 0.5px; }
+    .mom-badge {
+      font-size: 9px; font-weight: 900; padding: 1px 4px; border-radius: 3px;
+      background: var(--f1-purple); color: #fff; margin-right: 4px; display: none;
+    }
+    .mom-badge.active { display: inline-block; animation: pulse 0.6s infinite alternate; }
+    @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+    .drv-gap { flex: 1; text-align: right; font-family: monospace; font-size: 12px; color: #ddd; }
+    .tyre-icon {
+      width: 18px; height: 18px; border-radius: 50%; margin-left: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 900; background: #111;
+    }
+    .tyre-S { border: 2px solid #ff2800; color: #ff2800; }
+    .tyre-M { border: 2px solid #ffd000; color: #ffd000; }
+    .tyre-H { border: 2px solid #ffffff; color: #ffffff; }
+    .pit-tag {
+      background: var(--f1-yellow); color: #000; font-weight: 900;
+      font-size: 10px; padding: 1px 4px; border-radius: 2px; margin-left: 6px;
+    }
+
+    /* 5 Lights Gantry UI */
+    #start-lights-panel {
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      background: #111; border: 3px solid #333; border-radius: 12px;
+      padding: 12px 24px; display: none; gap: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.9);
+      z-index: 30;
+    }
+    .light-pod {
+      display: flex; flex-direction: column; gap: 8px; background: #050505;
+      padding: 8px; border-radius: 8px; border: 1px solid #222;
+    }
+    .red-light {
+      width: 28px; height: 28px; border-radius: 50%; background: #2a0808;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.8); transition: background 0.05s, box-shadow 0.05s;
+    }
+    .red-light.on {
+      background: #ff1100;
+      box-shadow: 0 0 22px #ff1100, 0 0 8px #ff7700;
+    }
+
+    /* Pit Stop Automatic Popup */
+    #pit-popup-container {
+      position: absolute; bottom: 90px; left: 320px;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .pit-popup {
+      background: linear-gradient(90deg, #15151e 0%, #252535 100%);
+      border-left: 5px solid var(--f1-yellow); border-radius: 4px;
+      padding: 10px 16px; min-width: 240px; box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .pit-popup-title { font-size: 11px; color: var(--f1-yellow); font-weight: 800; letter-spacing: 1px; }
+    .pit-popup-main { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; }
+    .pit-popup-drv { font-size: 16px; font-weight: 900; }
+    .pit-popup-time { font-size: 22px; font-weight: 900; color: #fff; font-family: monospace; }
+
+    /* Sub Viewport Label & Frame (PiP Onboard / Multi Onboard) */
+    #pip-frame {
+      position: absolute; right: 20px; bottom: 78px;
+      width: 36%; height: 38%; border: 2px solid var(--f1-red);
+      border-radius: 6px; pointer-events: none; display: none;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.8);
+    }
+    .pip-header {
+      background: rgba(21, 21, 30, 0.9); padding: 5px 12px;
+      font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px;
+      border-bottom-right-radius: 6px; border-bottom: 2px solid var(--f1-red);
+    }
+
+    /* GPS Map & Weather Widget */
+    #right-widgets {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+    }
+    #gps-widget {
+      background: var(--f1-panel); border: 1px solid var(--f1-border);
+      border-radius: 8px; padding: 8px; width: 210px; height: 155px;
+      display: flex; flex-direction: column;
+    }
+    .widget-title {
+      font-size: 10px; font-weight: 800; color: #aaa; letter-spacing: 1px;
+      margin-bottom: 4px; display: flex; justify-content: space-between;
+    }
+    #gps-canvas { width: 100%; flex: 1; }
+
+    #weather-widget {
+      background: var(--f1-panel); border: 1px solid var(--f1-border);
+      border-radius: 8px; padding: 8px 12px; width: 210px; font-size: 11px; display: none;
+    }
+    .weather-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+    .weather-item span { display: block; color: #999; font-size: 10px; }
+    .weather-item strong { font-size: 13px; color: #fff; }
+
+    /* F1TV Bottom Control Bar */
+    #bottom-bar {
+      background: rgba(15, 15, 22, 0.94); border-top: 1px solid var(--f1-border);
+      padding: 10px 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .f1tv-switcher { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      background: #252533; color: #fff; border: 1px solid rgba(255,255,255,0.18);
+      padding: 7px 13px; border-radius: 4px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn:hover { background: #353548; }
+    .btn.active, .btn-red { background: var(--f1-red); border-color: var(--f1-red); }
+    .btn-red:hover { background: #ff1e18; }
+    .btn-green { background: #00a83f; border-color: #00d64f; }
+    select, input[type="number"], input[type="text"] {
+      background: #1c1c28; color: #fff; border: 1px solid rgba(255,255,255,0.25);
+      padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: 700;
+    }
+
+    /* Broadcast Telemetry Banner (Bottom Center) */
+    #telemetry-hud {
+      position: absolute; bottom: 72px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(180deg, rgba(21,21,30,0.95), rgba(10,10,15,0.95));
+      border-top: 3px solid var(--f1-red); border-radius: 8px;
+      padding: 8px 20px; display: flex; align-items: center; gap: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    }
+    .tele-drv { min-width: 120px; }
+    .tele-drv-name { font-size: 15px; font-weight: 900; letter-spacing: 0.5px; }
+    .tele-drv-team { font-size: 11px; color: #aaa; }
+    .tele-speed-box { text-align: center; min-width: 80px; }
+    .tele-speed { font-size: 26px; font-weight: 900; font-family: monospace; line-height: 1; }
+    .tele-unit { font-size: 10px; color: #aaa; }
+    .tele-bars { width: 130px; display: flex; flex-direction: column; gap: 5px; font-size: 10px; }
+    .bar-wrap { display: flex; align-items: center; gap: 6px; }
+    .bar-bg { flex: 1; height: 7px; background: #222; border-radius: 4px; overflow: hidden; }
+    .bar-fill-ers { height: 100%; background: var(--f1-purple); width: 80%; transition: width 0.1s; }
+    .bar-fill-tyre { height: 100%; background: var(--f1-green); width: 100%; transition: width 0.2s; }
+
+    /* Admin Director Dock */
+    #admin-dock {
+      position: absolute; top: 58px; right: 240px; width: 420px;
+      background: rgba(18, 18, 26, 0.95); border: 1px solid rgba(225,6,0,0.5);
+      border-top: 4px solid var(--f1-red); border-radius: 6px;
+      padding: 12px; display: none; flex-direction: column; gap: 10px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.75); max-height: calc(100vh - 140px); overflow-y: auto;
+    }
+    .admin-section {
+      border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;
+    }
+    .admin-section:last-child { border-bottom: none; padding-bottom: 0; }
+    .admin-sec-title {
+      font-size: 11px; font-weight: 800; color: var(--f1-red); letter-spacing: 0.8px; margin-bottom: 6px;
+    }
+    .admin-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .url-share-box {
+      background: #0d0d14; border: 1px solid #333; padding: 6px 8px;
+      border-radius: 4px; font-family: monospace; font-size: 11px; width: 100%;
+      color: #00e1ff; overflow-x: auto; white-space: nowrap; user-select: all;
+    }
+
+    /* Modals (Name Setup, Betting, Final Results) */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+      z-index: 100; display: none; align-items: center; justify-content: center;
+      padding: 20px; pointer-events: auto;
+    }
+    .modal-card {
+      background: #181824; border-top: 5px solid var(--f1-red);
+      border-radius: 8px; max-width: 780px; width: 100%; padding: 22px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.9); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 20px; font-weight: 900; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: #bbb; margin-bottom: 16px; }
+    .bet-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px; margin-bottom: 16px;
+    }
+    .bet-driver-card {
+      background: #222232; border: 2px solid transparent; border-radius: 6px;
+      padding: 10px; cursor: pointer; transition: all 0.15s;
+    }
+    .bet-driver-card:hover { background: #2b2b40; }
+    .bet-driver-card.selected { border-color: var(--f1-red); background: rgba(225, 6, 0, 0.18); }
+    .odds-badges { display: flex; gap: 6px; margin-top: 6px; font-size: 11px; font-family: monospace; }
+    .odd-pill { background: #14141d; padding: 2px 6px; border-radius: 4px; color: var(--f1-yellow); }
+  </style>
+</head>
+<body>
+
+  <!-- 3D Viewport Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- UI Overlay -->
+  <div id="ui-layer">
+    <!-- Top Header -->
+    <div id="top-bar" class="interactive">
+      <div class="f1-logo-box">
+        <div class="f1-badge">F1 2026</div>
+        <div class="session-pill">
+          <span id="session-name-label">FREE PRACTICE</span>
+          <span id="session-timer-label" class="session-timer">--:--</span>
+        </div>
+        <div id="bet-status-pill" style="font-size:12px; color:#ccc;"></div>
+      </div>
+
+      <div class="user-wallet-box">
+        <div>PLAYER: <strong id="player-name-ui">---</strong></div>
+        <div>所持金: <span id="player-money-ui" class="wallet-amount">¥100,000</span></div>
+        <button id="toggle-role-btn" class="btn" style="padding:4px 8px; font-size:11px;">/admin 切替</button>
+      </div>
+    </div>
+
+    <!-- Center Broadcast Area -->
+    <div id="main-area">
+      <!-- Left: F1 Timing Tower -->
+      <div id="timing-tower" class="interactive">
+        <div class="tower-header">
+          <span id="tower-title">LIVE TIMING</span>
+          <span id="tower-lap-counter">LAP 1/5</span>
+        </div>
+        <div id="tower-rows"></div>
+      </div>
+
+      <!-- 5 Red Lights Start Gantry -->
+      <div id="start-lights-panel">
+        <div class="light-pod"><div class="red-light"></div><div class="red-light l-ind"></div></div>
+        <div class="light-pod"><div class="red-light"></div><div class="red-light l-ind"></div></div>
+        <div class="light-pod"><div class="red-light"></div><div class="red-light l-ind"></div></div>
+        <div class="light-pod"><div class="red-light"></div><div class="red-light l-ind"></div></div>
+        <div class="light-pod"><div class="red-light"></div><div class="red-light l-ind"></div></div>
+      </div>
+
+      <!-- Auto Pit Stop Notification Container -->
+      <div id="pit-popup-container"></div>
+
+      <!-- Sub Viewport Frame (PiP Onboard / Multi-view) -->
+      <div id="pip-frame">
+        <div class="pip-header">
+          <span style="color:var(--f1-red);">● ONBOARD</span>
+          <span id="pip-driver-label">VERSTAPPEN</span>
+        </div>
+      </div>
+
+      <!-- Admin Broadcast & Race Control Dock -->
+      <div id="admin-dock" class="interactive">
+        <div class="admin-section">
+          <div class="admin-sec-title">1. ゲーム作成 & P2P参加URL発行 (HOST /admin)</div>
+          <div class="admin-row">
+            <button id="btn-create-game" class="btn btn-red">新規ゲーム作成 (フリー走行開始)</button>
+            <span id="peer-conn-count" style="font-size:12px; color:#aaa;">参加者: 0人</span>
+          </div>
+          <div style="margin-top:6px; font-size:11px; color:#bbb;">参加者用URL（別タブ・別端末で開くとP2P参加）:</div>
+          <div id="share-url-display" class="url-share-box">「新規ゲーム作成」を押すとURLが発行されます</div>
+        </div>
+
+        <div class="admin-section">
+          <div class="admin-sec-title">2. セッション進行管理 (RACE CONTROL)</div>
+          <div class="admin-row">
+            <label style="font-size:12px;">予選時間(秒):</label>
+            <input type="number" id="quali-duration-input" value="45" min="15" max="300" style="width:65px;" />
+            <button id="btn-start-quali" class="btn btn-red">予選開始</button>
+            <button id="btn-end-quali" class="btn">予選を強制終了→賭けへ</button>
+          </div>
+          <div class="admin-row" style="margin-top:6px;">
+            <button id="btn-close-betting" class="btn btn-red">賭け締切 → フォーメーションラップ開始</button>
+          </div>
+          <div class="admin-row" style="margin-top:6px;">
+            <button id="btn-five-lights" class="btn btn-green" disabled>🚦 5ライト点灯 ＆ レーススタート</button>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <div class="admin-sec-title">3. 国際映像 カメラ & 表示切替 (BROADCAST DIRECTOR)</div>
+          <div class="admin-row">
+            <span style="font-size:11px;">国際映像ターゲット:</span>
+            <select id="admin-world-target"></select>
+          </div>
+          <div class="admin-row">
+            <span style="font-size:11px;">カメラアングル:</span>
+            <button class="btn cam-mode-btn active" data-cam="track">TVトラック</button>
+            <button class="btn cam-mode-btn" data-cam="chase">外部チェイス</button>
+            <button class="btn cam-mode-btn" data-cam="heli">上空ヘリ</button>
+            <button class="btn cam-mode-btn" data-cam="onboard">オンボード</button>
+          </div>
+          <div class="admin-row" style="margin-top:6px;">
+            <button id="btn-toggle-tower" class="btn active">順位タワー表示</button>
+            <button id="btn-toggle-times" class="btn active">タイム表示</button>
+            <button id="btn-toggle-tyres" class="btn active">タイヤ表示</button>
+            <button id="btn-toggle-gps" class="btn active">GPS表示</button>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <div class="admin-sec-title">4. 主催者専用マルチオンボード確認</div>
+          <div class="admin-row">
+            <button id="btn-admin-all-onboard" class="btn">全12台オンボード グリッド表示: OFF</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: GPS Circuit Map & Weather -->
+      <div id="right-widgets" class="interactive">
+        <div id="gps-widget">
+          <div class="widget-title"><span>CIRCUIT GPS</span><span id="drs-zone-label" style="color:var(--f1-purple);">MOM ACTIVE</span></div>
+          <canvas id="gps-canvas" width="200" height="125"></canvas>
+        </div>
+        <div id="weather-widget">
+          <div class="widget-title"><span>METEO / TRACK WEATHER</span><span>DRY</span></div>
+          <div class="weather-grid">
+            <div class="weather-item"><span>路面温度</span><strong id="w-track-temp">38.4°C</strong></div>
+            <div class="weather-item"><span>気温</span><strong id="w-air-temp">24.1°C</strong></div>
+            <div class="weather-item"><span>湿度</span><strong id="w-humidity">46%</strong></div>
+            <div class="weather-item"><span>風速</span><strong id="w-wind">2.8 m/s NW</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Focused Car Telemetry Banner -->
+    <div id="telemetry-hud">
+      <div class="tele-drv">
+        <div id="hud-drv-name" class="tele-drv-name">1 M. VERSTAPPEN</div>
+        <div id="hud-drv-team" class="tele-drv-team">Red Bull Racing</div>
+      </div>
+      <div class="tele-speed-box">
+        <div id="hud-speed" class="tele-speed">312</div>
+        <div class="tele-unit">KM/H | <span id="hud-gear">G8</span></div>
+      </div>
+      <div class="tele-bars">
+        <div class="bar-wrap">
+          <span style="width:32px;">ERS</span>
+          <div class="bar-bg"><div id="hud-ers-bar" class="bar-fill-ers"></div></div>
+        </div>
+        <div class="bar-wrap">
+          <span style="width:32px;">TYRE</span>
+          <div class="bar-bg"><div id="hud-tyre-bar" class="bar-fill-tyre"></div></div>
+        </div>
+      </div>
+      <div id="hud-mom-status" style="font-size:11px; font-weight:900; padding:4px 8px; border-radius:4px; background:#222; color:#888;">
+        OVERTAKE MODE: OFF
+      </div>
+    </div>
+
+    <!-- Bottom Bar: F1TV View Switcher -->
+    <div id="bottom-bar" class="interactive">
+      <div class="f1tv-switcher">
+        <span style="font-size:12px; font-weight:800; color:var(--f1-red); margin-right:4px;">F1TV VIEW:</span>
+        <button class="btn view-layout-btn active" data-layout="dual">国際映像 ＋ オンボード (2画面)</button>
+        <button class="btn view-layout-btn" data-layout="world">国際映像のみ</button>
+        <button class="btn view-layout-btn" data-layout="onboard">オンボードのみ</button>
+      </div>
+
+      <div class="f1tv-switcher">
+        <span style="font-size:12px; color:#ccc;">マイ・オンボード選択:</span>
+        <select id="user-onboard-select"></select>
+        <button id="btn-open-bet-modal" class="btn btn-red" style="display:none;">💰 ベッティング画面を開く</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Initial Player Name Setup Modal -->
+  <div id="name-modal" class="modal-backdrop">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="modal-title">F1 GP BETTING へようこそ</div>
+      <div class="modal-sub">初回アクセスボーナスとして <strong>¥100,000</strong> が支給されます。プレイヤー名を設定してください。</div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <input type="text" id="player-name-input" placeholder="あなたの名前を入力" maxlength="16" style="font-size:15px; padding:10px;" />
+        <button id="btn-save-name" class="btn btn-red" style="padding:10px; font-size:14px;">登録してサーキットへ入る</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Post-Qualifying Betting Modal -->
+  <div id="betting-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-title">🏁 予選終了！ スターティンググリッド ＆ 勝者予想ベット</div>
+      <div class="modal-sub">
+        ポールポジションが最も低倍率、最後尾（12番グリッド）が最も高倍率です。<br>
+        <strong>選んだ選手が1位・2位・3位のいずれかに入れば的中！</strong>（1位が最高配当）
+      </div>
+      <div id="bet-driver-grid" class="bet-grid"></div>
+      <div style="background:#111119; padding:14px; border-radius:6px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+        <div>
+          <span style="font-size:12px; color:#aaa;">賭け金設定 (所持金: <strong id="bet-modal-wallet">¥100,000</strong>):</span>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+            <input type="number" id="bet-amount-input" value="10000" min="1000" step="1000" style="width:130px; font-size:15px;" />
+            <button class="btn quick-bet-btn" data-amt="5000">+5,000</button>
+            <button class="btn quick-bet-btn" data-amt="10000">+10,000</button>
+            <button class="btn quick-bet-btn" data-amt="all">ALL IN</button>
+          </div>
+        </div>
+        <button id="btn-submit-bet" class="btn btn-red" style="padding:12px 24px; font-size:14px;">この予想でベット確定！</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Race Result & Payout Modal -->
+  <div id="result-modal" class="modal-backdrop">
+    <div class="modal-card" style="max-width:560px;">
+      <div class="modal-title">🏆 決勝レース結果 ＆ 配当精算</div>
+      <div id="result-podium-box" style="margin:14px 0; display:flex; flex-direction:column; gap:8px;"></div>
+      <div id="result-payout-box" style="background:#111119; padding:14px; border-radius:6px; margin-bottom:14px; font-size:14px;"></div>
+      <button id="btn-close-result" class="btn btn-red" style="width:100%; padding:10px;">閉じる</button>
+    </div>
+  </div>
+
+<script>
+/* ============================================================================
+   1. 2026 F1 DRIVERS POOL (All 2026 Grid Candidates -> 12 Chosen Per Game)
+============================================================================ */
+const ALL_2026_DRIVERS = [
+  { num: 1,  code: 'VER', name: 'M. Verstappen', team: 'Red Bull Racing', color: '#1e41ff', sec: '#ff1801', skill: 0.98 },
+  { num: 4,  code: 'NOR', name: 'L. Norris',     team: 'McLaren',         color: '#ff8000', sec: '#111111', skill: 0.97 },
+  { num: 16, code: 'LEC', name: 'C. Leclerc',    team: 'Ferrari',         color: '#dc0000', sec: '#ffffff', skill: 0.97 },
+  { num: 44, code: 'HAM', name: 'L. Hamilton',   team: 'Ferrari',         color: '#dc0000', sec: '#ffd000', skill: 0.96 },
+  { num: 81, code: 'PIA', name: 'O. Piastri',    team: 'McLaren',         color: '#ff8000', sec: '#0090ff', skill: 0.96 },
+  { num: 63, code: 'RUS', name: 'G. Russell',    team: 'Mercedes',        color: '#00d2be', sec: '#222222', skill: 0.95 },
+  { num: 12, code: 'ANT', name: 'K. Antonelli',  team: 'Mercedes',        color: '#00d2be', sec: '#ffffff', skill: 0.92 },
+  { num: 14, code: 'ALO', name: 'F. Alonso',     team: 'Aston Martin',    color: '#006f62', sec: '#cedc00', skill: 0.94 },
+  { num: 55, code: 'SAI', name: 'C. Sainz',      team: 'Williams',        color: '#005aff', sec: '#ffffff', skill: 0.94 },
+  { num: 23, code: 'ALB', name: 'A. Albon',      team: 'Williams',        color: '#005aff', sec: '#00d2ff', skill: 0.92 },
+  { num: 10, code: 'GAS', name: 'P. Gasly',      team: 'Alpine',          color: '#0090ff', sec: '#ff66b2', skill: 0.92 },
+  { num: 30, code: 'LAW', name: 'L. Lawson',     team: 'Red Bull / RB',   color: '#2b4562', sec: '#ffffff', skill: 0.91 },
+  { num: 22, code: 'TSU', name: 'Y. Tsunoda',    team: 'Racing Bulls',    color: '#1634cb', sec: '#ffffff', skill: 0.92 },
+  { num: 87, code: 'BEA', name: 'O. Bearman',    team: 'Haas',            color: '#b6babd', sec: '#e10600', skill: 0.90 },
+  { num: 31, code: 'OCO', name: 'E. Ocon',       team: 'Haas',            color: '#b6babd', sec: '#111111', skill: 0.91 },
+  { num: 27, code: 'HUL', name: 'N. Hulkenberg', team: 'Audi',            color: '#f50537', sec: '#silver', skill: 0.91 },
+  { num: 5,  code: 'BOR', name: 'G. Bortoleto',  team: 'Audi',            color: '#f50537', sec: '#009b3a', skill: 0.89 },
+  { num: 6,  code: 'HAD', name: 'I. Hadjar',     team: 'Racing Bulls',    color: '#1634cb', sec: '#ff0000', skill: 0.89 },
+  { num: 18, code: 'STR', name: 'L. Stroll',     team: 'Aston Martin',    color: '#006f62', sec: '#ffffff', skill: 0.89 },
+  { num: 11, code: 'PER', name: 'S. Perez',      team: 'Cadillac F1',     color: '#d4af37', sec: '#111111', skill: 0.91 }
+];
+
+/* ============================================================================
+   2. USER DATA & ROLE DETECTION (/admin vs Participant)
+============================================================================ */
+const STORAGE_KEY_NAME = 'f1_bet_player_name_2026';
+const STORAGE_KEY_MONEY = 'f1_bet_player_money_2026';
+
+let playerProfile = {
+  id: 'plr_' + Math.random().toString(36).substring(2, 9),
+  name: localStorage.getItem(STORAGE_KEY_NAME) || '',
+  money: parseInt(localStorage.getItem(STORAGE_KEY_MONEY) || '100000', 10),
+  betDriverCode: null,
+  betAmount: 0,
+  betConfirmed: false
+};
+
+function saveProfile() {
+  localStorage.setItem(STORAGE_KEY_NAME, playerProfile.name);
+  localStorage.setItem(STORAGE_KEY_MONEY, String(playerProfile.money));
+  document.getElementById('player-name-ui').textContent = playerProfile.name || 'GUEST';
+  document.getElementById('player-money-ui').textContent = '¥' + playerProfile.money.toLocaleString();
+  document.getElementById('bet-modal-wallet').textContent = '¥' + playerProfile.money.toLocaleString();
+}
+
+const urlParams = new URLSearchParams(window.location.search);
+const roomParam = urlParams.get('room');
+let isAdmin = (
+  window.location.pathname.endsWith('/admin') ||
+  window.location.hash === '#admin' ||
+  urlParams.has('admin')
+) && !roomParam;
+
+/* ============================================================================
+   3. GAME STATE & BROADCAST CONFIGURATION
+============================================================================ */
+const TOTAL_RACE_LAPS = 5;
+let gameState = {
+  phase: 'FREE_PRACTICE', // FREE_PRACTICE, QUALIFYING, BETTING, FORMATION_LAP, FIVE_LIGHTS, RACE, FINISHED
+  timer: 0,
+  lightsCount: 0,
+  raceLap: 1,
+  broadcast: {
+    targetCode: 'VER',
+    cameraMode: 'track', // track, chase, heli, onboard
+    showTower: true,
+    showTimes: true,
+    showTyres: true,
+    showGps: true
+  },
+  gridOdds: {}, // code -> { win: 2.1, p2: 1.4, p3: 1.1 }
+  drivers: [],
+  betsReceived: {} // playerId -> { name, driverCode, amount }
+};
+
+let userViewConfig = {
+  layout: 'dual', // dual, world, onboard
+  onboardCode: 'VER',
+  adminGrid12: false
+};
+
+/* ============================================================================
+   4. THREE.JS 3D CIRCUIT & F1 CARS ENGINE
+============================================================================ */
+const container = document.getElementById('canvas-container');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setScissorTest(true);
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1322);
+scene.fog = new THREE.FogExp2(0x0d1322, 0.00055);
+
+const worldCamera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.5, 3500);
+const pipCamera = new THREE.PerspectiveCamera(62, 16 / 9, 0.2, 2500);
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xdbe8ff, 0.65);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.25);
+sunLight.position.set(350, 500, 250);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.camera.near = 50;
+sunLight.shadow.camera.far = 1600;
+const d = 650;
+sunLight.shadow.camera.left = -d;
+sunLight.shadow.camera.right = d;
+sunLight.shadow.camera.top = d;
+sunLight.shadow.camera.bottom = -d;
+scene.add(sunLight);
+
+// Ground Plane
+const groundGeo = new THREE.PlaneGeometry(5000, 5000);
+const groundMat = new THREE.MeshLambertMaterial({ color: 0x162b1e });
+const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+groundMesh.rotation.x = -Math.PI / 2;
+groundMesh.position.y = -0.15;
+groundMesh.receiveShadow = true;
+scene.add(groundMesh);
+
+// Large Grand Prix Circuit Control Points
+const TRACK_POINTS = [
+  new THREE.Vector3(-320, 0, 420),   // Main Straight Start
+  new THREE.Vector3(0, 0, 420),      // Start/Finish Line
+  new THREE.Vector3(380, 0, 420),    // Main Straight End
+  new THREE.Vector3(520, 0, 340),    // Turn 1 Heavy Braking
+  new THREE.Vector3(540, 0, 160),    // Turn 2
+  new THREE.Vector3(340, 0, 40),     // Turn 3 Chicane
+  new THREE.Vector3(460, 0, -140),   // Turn 4 Fast Sweep
+  new THREE.Vector3(380, 0, -380),   // Turn 5
+  new THREE.Vector3(120, 0, -460),   // Back Straight Start
+  new THREE.Vector3(-240, 0, -460),  // Back Straight End
+  new THREE.Vector3(-480, 0, -340),  // Hairpin Entry
+  new THREE.Vector3(-520, 0, -180),  // Hairpin Exit
+  new THREE.Vector3(-280, 0, -60),   // Infield S-Curve 1
+  new THREE.Vector3(-260, 0, 140),   // Infield S-Curve 2
+  new THREE.Vector3(-480, 0, 280),   // Final Corner
+];
+
+const mainCurve = new THREE.CatmullRomCurve3(TRACK_POINTS, true, 'centripetal', 0.5);
+const TRACK_SAMPLES = 900;
+const TRACK_WIDTH = 22;
+
+// Track Curvature Calculation for Realistic Braking & Cornering Speeds
+const trackCurvature = new Float32Array(TRACK_SAMPLES);
+for (let i = 0; i < TRACK_SAMPLES; i++) {
+  const t1 = ((i - 4 + TRACK_SAMPLES) % TRACK_SAMPLES) / TRACK_SAMPLES;
+  const t2 = ((i + 4) % TRACK_SAMPLES) / TRACK_SAMPLES;
+  const tan1 = mainCurve.getTangentAt(t1);
+  const tan2 = mainCurve.getTangentAt(t2);
+  const angle = tan1.angleTo(tan2);
+  trackCurvature[i] = angle; // Higher value = sharper turn
+}
+
+function getTargetSpeedAt(t) {
+  const idx = Math.floor(((t % 1 + 1) % 1) * TRACK_SAMPLES);
+  // Look ahead slightly for braking point
+  const lookAheadIdx = (idx + 12) % TRACK_SAMPLES;
+  const curv = Math.max(trackCurvature[idx], trackCurvature[lookAheadIdx] * 0.92);
+  // Map curvature to speed in km/h (95 km/h hairpin -> 338 km/h straight)
+  const factor = Math.max(0, 1 - curv * 2.35);
+  return 98 + 240 * Math.pow(factor, 1.5);
+}
+
+// Create Procedural Asphalt Texture with Start Grid & Kerbs
+function createTrackTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 512;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#25262c';
+  ctx.fillRect(0, 0, 512, 512);
+  // Noise
+  for (let i = 0; i < 6000; i++) {
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)';
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+  }
+  // Red/White Kerbs on edges
+  for (let y = 0; y < 512; y += 32) {
+    ctx.fillStyle = (y / 32) % 2 === 0 ? '#e10600' : '#ffffff';
+    ctx.fillRect(0, y, 22, 32);
+    ctx.fillRect(490, y, 22, 32);
+  }
+  // White track limits line
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(24, 0, 5, 512);
+  ctx.fillRect(483, 0, 5, 512);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1, 140);
+  tex.anisotropy = 8;
+  return tex;
+}
+
+// Build Ribbon Geometry for Circuit
+function buildCircuitMesh() {
+  const geo = new THREE.BufferGeometry();
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+
+  for (let i = 0; i <= TRACK_SAMPLES; i++) {
+    const t = (i % TRACK_SAMPLES) / TRACK_SAMPLES;
+    const pt = mainCurve.getPointAt(t);
+    const tan = mainCurve.getTangentAt(t);
+    const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
+
+    const left = pt.clone().addScaledVector(normal, TRACK_WIDTH * 0.5);
+    const right = pt.clone().addScaledVector(normal, -TRACK_WIDTH * 0.5);
+
+    positions.push(left.x, 0.05, left.z, right.x, 0.05, right.z);
+    uvs.push(0, i / TRACK_SAMPLES, 1, i / TRACK_SAMPLES);
+
+    if (i < TRACK_SAMPLES) {
+      const a = i * 2, b = i * 2 + 1, c = (i + 1) * 2, d = (i + 1) * 2 + 1;
+      indices.push(a, b, c, b, d, c);
+    }
+  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+
+  const mat = new THREE.MeshStandardMaterial({
+    map: createTrackTexture(),
+    roughness: 0.75,
+    metalness: 0.1
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+buildCircuitMesh();
+
+// Build Pit Lane & Pit Garages parallel to Main Straight (z = 392)
+const pitRoadGeo = new THREE.PlaneGeometry(460, 10);
+const pitRoadMat = new THREE.MeshStandardMaterial({ color: 0x1d1e24, roughness: 0.8 });
+const pitRoad = new THREE.Mesh(pitRoadGeo, pitRoadMat);
+pitRoad.rotation.x = -Math.PI / 2;
+pitRoad.position.set(20, 0.06, 395);
+scene.add(pitRoad);
+
+// Pit Building & Grandstands
+const pitBuilding = new THREE.Mesh(
+  new THREE.BoxGeometry(360, 18, 22),
+  new THREE.MeshStandardMaterial({ color: 0x262936, metalness: 0.4, roughness: 0.4 })
+);
+pitBuilding.position.set(20, 9, 374);
+pitBuilding.castShadow = true;
+scene.add(pitBuilding);
+
+const grandStand = new THREE.Mesh(
+  new THREE.BoxGeometry(420, 24, 28),
+  new THREE.MeshStandardMaterial({ color: 0x1a1c28, roughness: 0.6 })
+);
+grandStand.position.set(20, 12, 456);
+grandStand.castShadow = true;
+scene.add(grandStand);
+
+// Start/Finish Checkered Line & 3D Start Light Gantry at t ≈ 0.085 (x ≈ 60, z = 420)
+const START_LINE_T = 0.085;
+const startPt = mainCurve.getPointAt(START_LINE_T);
+const gantryBridge = new THREE.Mesh(
+  new THREE.BoxGeometry(2, 11, 28),
+  new THREE.MeshStandardMaterial({ color: 0x111111 })
+);
+gantryBridge.position.set(startPt.x, 8.5, startPt.z);
+scene.add(gantryBridge);
+
+// Trackside Camera Towers & Floodlights around the circuit
+const tvCameraPositions = [];
+for (let i = 0; i < 18; i++) {
+  const t = i / 18;
+  const pt = mainCurve.getPointAt(t);
+  const tan = mainCurve.getTangentAt(t);
+  const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
+  const camPos = pt.clone().addScaledVector(normal, (i % 2 === 0 ? 22 : -22));
+  camPos.y = 7.5;
+  tvCameraPositions.push({ t, pos: camPos });
+
+  // Light pole
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.4, 0.6, 18, 8),
+    new THREE.MeshLambertMaterial({ color: 0x888899 })
+  );
+  pole.position.set(camPos.x, 9, camPos.z);
+  scene.add(pole);
+}
+
+/* ============================================================================
+   5. DETAILED 3D F1 CAR GENERATOR (2026 SPEC WITH HALO, TYRE RINGS & ERS LIGHT)
+============================================================================ */
+function createTyreSetMaterial(compound) {
+  const colorHex = compound === 'S' ? 0xff2800 : (compound === 'M' ? 0xffd000 : 0xffffff);
+  return new THREE.MeshBasicMaterial({ color: colorHex });
+}
+
+function buildF1CarMesh(driver) {
+  const group = new THREE.Group();
+
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: driver.color, metalness: 0.45, roughness: 0.25
+  });
+  const secMat = new THREE.MeshStandardMaterial({
+    color: driver.sec, metalness: 0.3, roughness: 0.4
+  });
+  const carbonMat = new THREE.MeshStandardMaterial({
+    color: 0x151519, metalness: 0.2, roughness: 0.7
+  });
+
+  // Floor / Underbody
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.08, 5.2), carbonMat);
+  floor.position.y = 0.22;
+  group.add(floor);
+
+  // Main Monocoque & Engine Cover
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.52, 3.6), bodyMat);
+  chassis.position.set(0, 0.52, -0.2);
+  chassis.castShadow = true;
+  group.add(chassis);
+
+  // Nose Cone
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.28, 1.75), bodyMat);
+  nose.position.set(0, 0.36, 2.1);
+  nose.rotation.x = 0.1;
+  group.add(nose);
+
+  // Sidepods
+  const sidepodL = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 2.3), secMat);
+  sidepodL.position.set(0.68, 0.44, -0.1);
+  const sidepodR = sidepodL.clone();
+  sidepodR.position.x = -0.68;
+  group.add(sidepodL, sidepodR);
+
+  // Front Wing (2026 Active Aero style)
+  const fWing = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.08, 0.55), carbonMat);
+  fWing.position.set(0, 0.22, 2.75);
+  const fWingFlap = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.06, 0.25), secMat);
+  fWingFlap.position.set(0, 0.28, 2.65);
+  group.add(fWing, fWingFlap);
+
+  // Rear Wing & Active Aero Flap
+  const rWingSupport = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.65, 0.4), carbonMat);
+  rWingSupport.position.set(0, 0.75, -2.35);
+  const rWingMain = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.25, 0.42), bodyMat);
+  rWingMain.position.set(0, 1.05, -2.42);
+  group.add(rWingSupport, rWingMain);
+
+  // Driver Helmet & Halo
+  const helmet = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 12, 12),
+    new THREE.MeshStandardMaterial({ color: driver.sec, roughness: 0.2 })
+  );
+  helmet.position.set(0, 0.86, 0.25);
+  group.add(helmet);
+
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.36, 0.045, 8, 16, Math.PI),
+    carbonMat
+  );
+  halo.rotation.x = -Math.PI * 0.42;
+  halo.position.set(0, 0.88, 0.35);
+  group.add(halo);
+
+  // T-Cam above airbox
+  const tCam = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 0.08), new THREE.MeshBasicMaterial({ color: 0xffd000 }));
+  tCam.position.set(0, 1.18, -0.05);
+  group.add(tCam);
+
+  // Rear ERS / Overtake Mode Light
+  const ersLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+  const ersLight = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.08), ersLightMat);
+  ersLight.position.set(0, 0.42, -2.62);
+  group.add(ersLight);
+
+  // 4 Wheels with Compound Stripe Rings
+  const wheelPositions = [
+    { x: 0.98, y: 0.42, z: 1.65 },
+    { x: -0.98, y: 0.42, z: 1.65 },
+    { x: 1.02, y: 0.44, z: -1.65 },
+    { x: -1.02, y: 0.44, z: -1.65 }
+  ];
+  const tyreRings = [];
+  const rubberMat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.85 });
+  const ringMat = createTyreSetMaterial(driver.tyre);
+
+  wheelPositions.forEach(wp => {
+    const wGroup = new THREE.Group();
+    const tyreCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.46, 18), rubberMat);
+    tyreCyl.rotation.z = Math.PI / 2;
+    wGroup.add(tyreCyl);
+
+    const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.032, 8, 20), ringMat);
+    stripe.rotation.y = Math.PI / 2;
+    stripe.position.x = wp.x > 0 ? 0.235 : -0.235;
+    wGroup.add(stripe);
+    tyreRings.push(stripe);
+
+    wGroup.position.set(wp.x, wp.y, wp.z);
+    group.add(wGroup);
+  });
+
+  group.scale.set(1.25, 1.25, 1.25);
+  scene.add(group);
+
+  return { group, ersLightMat, tyreRings, rWingMain };
+}
+
+/* ============================================================================
+   6. INITIALIZE 12 DRIVERS & AI RACING SIMULATION
+============================================================================ */
+let carMeshes = {}; // code -> { group, ersLightMat, tyreRings, rWingMain }
+
+function initDriversList(selectedDriversData) {
+  // Remove existing meshes
+  Object.values(carMeshes).forEach(m => scene.remove(m.group));
+  carMeshes = {};
+
+  const compounds = ['S', 'M', 'H'];
+  gameState.drivers = selectedDriversData.map((d, idx) => {
+    const startT = (START_LINE_T - (idx + 1) * 0.0085 + 1) % 1;
+    const tyre = compounds[idx % 2]; // S or M at start
+    const drvObj = {
+      ...d,
+      pos: idx + 1,
+      gridPos: idx + 1,
+      t: startT,
+      laneOffset: (idx % 2 === 0) ? -3.2 : 3.2,
+      targetLane: (idx % 2 === 0) ? -2.5 : 2.5,
+      speed: 0, // km/h
+      lap: 1,
+      totalDist: startT,
+      bestLapTime: null,
+      currentLapStart: performance.now(),
+      lastLapTime: null,
+      gapToLeader: 0,
+      tyre: tyre,
+      tyreLife: 100,
+      ers: 100,
+      momActive: false, // 2026 Manual Override Mode (Overtake Mode)
+      inPit: false,
+      pitStage: 0, // 0: track, 1: pit-lane entry, 2: stopped, 3: pit-exit
+      pitStopTimer: 0,
+      lastPitDuration: null,
+      finished: false
+    };
+    carMeshes[d.code] = buildF1CarMesh(drvObj);
+    return drvObj;
+  });
+
+  gameState.broadcast.targetCode = gameState.drivers[0].code;
+  userViewConfig.onboardCode = gameState.drivers[0].code;
+  populateDriverSelectors();
+}
+
+function selectRandom12Drivers() {
+  const shuffled = [...ALL_2026_DRIVERS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 12);
+}
+
+function updateTyreVisual(code, compound) {
+  const m = carMeshes[code];
+  if (!m) return;
+  const col = compound === 'S' ? 0xff2800 : (compound === 'M' ? 0xffd000 : 0xffffff);
+  m.tyreRings.forEach(r => r.material.color.setHex(col));
+}
+
+function showPitPopup(drvName, durationSec) {
+  const container = document.getElementById('pit-popup-container');
+  const el = document.createElement('div');
+  el.className = 'pit-popup';
+  el.innerHTML = `
+    <div class="pit-popup-title">⏱ PIT STOP TIME</div>
+    <div class="pit-popup-main">
+      <span class="pit-popup-drv">${drvName}</span>
+      <span class="pit-popup-time">${durationSec.toFixed(1)}s</span>
+    </div>
+  `;
+  container.appendChild(el);
+  setTimeout(() => { el.remove(); }, 5500);
+}
+
+/* ============================================================================
+   7. AI PHYSICS, OVERTAKE MODE (2026) & PIT STOP LOGIC
+============================================================================ */
+const TRACK_LENGTH_METERS = 4600;
+
+function updateSimulation(dt) {
+  if (!gameState.drivers.length) return;
+  const now = performance.now();
+
+  // Session Timer Countdown (Qualifying)
+  if (gameState.phase === 'QUALIFYING' && isAdmin) {
+    gameState.timer -= dt;
+    if (gameState.timer <= 0) {
+      gameState.timer = 0;
+      finishQualifyingAndOpenBetting();
+    }
+  }
+
+  gameState.drivers.forEach((drv, i) => {
+    // 1. FIVE LIGHTS WAIT: Cars stay still on grid
+    if (gameState.phase === 'FIVE_LIGHTS' || gameState.phase === 'BETTING') {
+      drv.speed = 0;
+      drv.momActive = false;
+      return;
+    }
+
+    // 2. FORMATION LAP: Parade speed & weave tyres, then stop at starting grid
+    if (gameState.phase === 'FORMATION_LAP') {
+      const targetGridT = (START_LINE_T - (drv.gridPos) * 0.0068 + 1) % 1;
+      const distToGrid = (targetGridT - drv.t + 1) % 1;
+      if (distToGrid < 0.015 && drv.totalDist > 0.65) {
+        drv.t = targetGridT;
+        drv.speed = 0;
+        drv.laneOffset = (drv.gridPos % 2 === 1) ? -3.2 : 3.2;
+      } else {
+        drv.speed = 135;
+        drv.laneOffset = Math.sin(now * 0.005 + i) * 4.2; // Tyre warming weave
+        const dT = ((drv.speed / 3.6) * dt) / TRACK_LENGTH_METERS;
+        drv.t = (drv.t + dT) % 1;
+        drv.totalDist += dT;
+      }
+      return;
+    }
+
+    // 3. PIT LANE LOGIC (During Free Practice or Race)
+    if (drv.inPit) {
+      if (drv.pitStage === 1) {
+        // Cruising in pit lane (80 km/h limit)
+        drv.speed = 80;
+        const dT = ((drv.speed / 3.6) * dt) / TRACK_LENGTH_METERS;
+        drv.t = (drv.t + dT) % 1;
+        drv.totalDist += dT;
+        if (drv.t >= 0.075 && drv.t <= 0.12) {
+          drv.pitStage = 2;
+          drv.pitStopTimer = 2.1 + Math.random() * 1.3; // 2.1s - 3.4s stop
+          drv.lastPitDuration = drv.pitStopTimer;
+        }
+      } else if (drv.pitStage === 2) {
+        drv.speed = 0;
+        drv.pitStopTimer -= dt;
+        if (drv.pitStopTimer <= 0) {
+          // Change tyres!
+          const nextTyres = ['S', 'M', 'H'].filter(c => c !== drv.tyre);
+          drv.tyre = nextTyres[Math.floor(Math.random() * nextTyres.length)];
+          drv.tyreLife = 100;
+          updateTyreVisual(drv.code, drv.tyre);
+          drv.pitStage = 3;
+          showPitPopup(`${drv.num} ${drv.code}`, drv.lastPitDuration);
+          if (isAdmin) broadcastEvent({ type: 'PIT_POPUP', name: `${drv.num} ${drv.code}`, duration: drv.lastPitDuration, code: drv.code, tyre: drv.tyre });
+        }
+      } else if (drv.pitStage === 3) {
+        drv.speed = 80;
+        const dT = ((drv.speed / 3.6) * dt) / TRACK_LENGTH_METERS;
+        drv.t = (drv.t + dT) % 1;
+        drv.totalDist += dT;
+        if (drv.t > 0.145) {
+          drv.inPit = false;
+          drv.pitStage = 0;
+        }
+      }
+      return;
+    }
+
+    // 4. NORMAL RACING / QUALIFYING / FREE PRACTICE AI
+    let baseTargetSpeed = getTargetSpeedAt(drv.t);
+
+    // Tyre compound grip modifier
+    const compoundGrip = drv.tyre === 'S' ? 1.035 : (drv.tyre === 'M' ? 1.0 : 0.975);
+    const wearPenalty = 1.0 - ((100 - drv.tyreLife) * 0.0012);
+
+    // Check car ahead for Slipstream & 2026 Manual Override Mode (Overtake Mode)
+    let carAhead = null;
+    let minGapT = 1.0;
+    gameState.drivers.forEach(other => {
+      if (other.code === drv.code || other.inPit) return;
+      const diffT = (other.t - drv.t + 1) % 1;
+      if (diffT > 0 && diffT < minGapT) {
+        minGapT = diffT;
+        carAhead = other;
+      }
+    });
+
+    drv.momActive = false;
+    if (carAhead && minGapT < 0.028 && drv.ers > 18 && baseTargetSpeed > 220) {
+      // Activate 2026 Overtake Mode (MOM)
+      drv.momActive = true;
+      drv.ers = Math.max(0, drv.ers - dt * 16);
+      baseTargetSpeed += 22; // Extra electric boost + X-mode low drag
+      // Choose overtaking lane away from carAhead
+      if (Math.abs(carAhead.laneOffset - drv.laneOffset) < 2.4) {
+        drv.targetLane = carAhead.laneOffset > 0 ? -4.2 : 4.2;
+      }
+    } else {
+      // Harvest ERS under braking
+      if (baseTargetSpeed < 170) {
+        drv.ers = Math.min(100, drv.ers + dt * 14);
+      }
+      // Ideal racing line based on track curvature
+      const idx = Math.floor(drv.t * TRACK_SAMPLES);
+      drv.targetLane = Math.sin(idx * 0.04) * 3.5;
+    }
+
+    // Smoothly steer toward targetLane
+    drv.laneOffset += (drv.targetLane - drv.laneOffset) * Math.min(1, dt * 3.5);
+
+    const desiredSpeed = baseTargetSpeed * drv.skill * compoundGrip * wearPenalty * (0.985 + Math.sin(now * 0.002 + i) * 0.02);
+    const accelRate = desiredSpeed > drv.speed ? 95 : 220; // Faster braking than acceleration
+    if (drv.speed < desiredSpeed) {
+      drv.speed = Math.min(desiredSpeed, drv.speed + accelRate * dt);
+    } else {
+      drv.speed = Math.max(desiredSpeed, drv.speed - accelRate * dt);
+    }
+
+    // Advance along spline
+    const prevT = drv.t;
+    const dT = ((drv.speed / 3.6) * dt) / TRACK_LENGTH_METERS;
+    drv.t = (drv.t + dT) % 1;
+    drv.totalDist += dT;
+
+    // Degrade tyres
+    const degRate = drv.tyre === 'S' ? 2.6 : (drv.tyre === 'M' ? 1.7 : 1.1);
+    drv.tyreLife = Math.max(5, drv.tyreLife - dT * 12 * degRate);
+
+    // Trigger Pit Entry near main straight entry (t around 0.97 -> 0.02) if tyres worn
+    if ((gameState.phase === 'RACE' || gameState.phase === 'FREE_PRACTICE') && !drv.finished) {
+      if (drv.tyreLife < 42 && drv.t > 0.96 && drv.t < 0.99 && drv.lap < TOTAL_RACE_LAPS) {
+        drv.inPit = true;
+        drv.pitStage = 1;
+      }
+    }
+
+    // Detect Start/Finish Line Crossing (START_LINE_T = 0.085)
+    if (prevT < START_LINE_T && drv.t >= START_LINE_T) {
+      const lapTimeSec = (now - drv.currentLapStart) / 1000;
+      drv.currentLapStart = now;
+      if (lapTimeSec > 20 && lapTimeSec < 180) {
+        // Normalize to realistic F1 lap time (around 78.000s - 82.500s)
+        const simulatedF1Time = 77.2 + (1 - drv.skill) * 18 + Math.random() * 0.85 - (drv.tyre === 'S' ? 0.55 : 0);
+        drv.lastLapTime = simulatedF1Time;
+        if (!drv.bestLapTime || simulatedF1Time < drv.bestLapTime) {
+          drv.bestLapTime = simulatedF1Time;
+        }
+      }
+      if (gameState.phase === 'RACE') {
+        drv.lap += 1;
+        if (drv.lap > TOTAL_RACE_LAPS && !drv.finished) {
+          drv.finished = true;
+          checkRaceCompletion();
+        }
+      }
+    }
+  });
+
+  // Update Positions & Gaps
+  if (gameState.phase === 'QUALIFYING') {
+    gameState.drivers.sort((a, b) => (a.bestLapTime || 999) - (b.bestLapTime || 999));
+  } else if (gameState.phase === 'RACE' || gameState.phase === 'FREE_PRACTICE') {
+    gameState.drivers.sort((a, b) => b.totalDist - a.totalDist);
+  }
+  const leaderDist = gameState.drivers[0]?.totalDist || 0;
+  gameState.drivers.forEach((d, idx) => {
+    d.pos = idx + 1;
+    d.gapToLeader = Math.max(0, (leaderDist - d.totalDist) * 82.0);
+  });
+  if (gameState.phase === 'RACE') {
+    gameState.raceLap = Math.min(TOTAL_RACE_LAPS, Math.max(...gameState.drivers.map(d => d.lap)));
+  }
+}
+
+/* ============================================================================
+   8. 3D MESH TRANSFORMS & MULTI-VIEWPORT RENDERING (WORLD + ONBOARD)
+============================================================================ */
+function syncCarMeshesTo3D() {
+  gameState.drivers.forEach(drv => {
+    const m = carMeshes[drv.code];
+    if (!m) return;
+
+    const pt = mainCurve.getPointAt(drv.t % 1);
+    const tan = mainCurve.getTangentAt(drv.t % 1);
+    const normal = new THREE.Vector3(-tan.z, 0, tan.x).normalize();
+
+    if (drv.inPit) {
+      // Position inside Pit Lane parallel to main straight
+      const pitProgress = ((drv.t - 0.96 + 1) % 1) / 0.19;
+      const pitX = -190 + pitProgress * 420;
+      m.group.position.set(pitX, 0.08, 395);
+      m.group.rotation.y = Math.PI / 2;
+    } else {
+      const worldPos = pt.clone().addScaledVector(normal, drv.laneOffset);
+      m.group.position.set(worldPos.x, 0.08, worldPos.z);
+      m.group.rotation.y = Math.atan2(tan.x, tan.z);
+    }
+
+    // ERS Light blinking when Overtake Mode active
+    if (drv.momActive) {
+      m.ersLightMat.color.setHex(( performance.now() % 200 < 100 ) ? 0xb138ff : 0xffffff);
+    } else {
+      m.ersLightMat.color.setHex(0xff0000);
+    }
+  });
+}
+
+function positionCameraForDriver(camera, drv, mode) {
+  if (!drv || !carMeshes[drv.code]) return;
+  const carGroup = carMeshes[drv.code].group;
+  const carPos = carGroup.position.clone();
+  const forward = new THREE.Vector3(Math.sin(carGroup.rotation.y), 0, Math.cos(carGroup.rotation.y)).normalize();
+
+  if (mode === 'onboard') {
+    // Authentic F1 T-Cam Onboard (slightly above Halo looking forward)
+    const camPos = carPos.clone()
+      .add(new THREE.Vector3(0, 1.55, 0))
+      .addScaledVector(forward, -0.15);
+    const lookTarget = carPos.clone()
+      .add(new THREE.Vector3(0, 1.15, 0))
+      .addScaledVector(forward, 28);
+    camera.position.copy(camPos);
+    camera.lookAt(lookTarget);
+  } else if (mode === 'chase') {
+    const camPos = carPos.clone()
+      .add(new THREE.Vector3(0, 3.8, 0))
+      .addScaledVector(forward, -10.5);
+    const lookTarget = carPos.clone().addScaledVector(forward, 12);
+    camera.position.lerp(camPos, 0.25);
+    camera.lookAt(lookTarget);
+  } else if (mode === 'heli') {
+    const tNow = performance.now() * 0.00015;
+    const camPos = carPos.clone().add(new THREE.Vector3(Math.cos(tNow) * 75, 68, Math.sin(tNow) * 75));
+    camera.position.lerp(camPos, 0.08);
+    camera.lookAt(carPos);
+  } else {
+    // TV Trackside Camera (picks nearest TV tower and pans smoothly)
+    let nearest = tvCameraPositions[0];
+    let minD = 999999;
+    tvCameraPositions.forEach(tc => {
+      const d = tc.pos.distanceToSquared(carPos);
+      if (d < minD) { minD = d; nearest = tc; }
+    });
+    camera.position.copy(nearest.pos);
+    camera.lookAt(carPos.x, carPos.y + 0.8, carPos.z);
+  }
+}
+
+function renderScene() {
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const pipFrame = document.getElementById('pip-frame');
+
+  const worldTargetDrv = gameState.drivers.find(d => d.code === gameState.broadcast.targetCode) || gameState.drivers[0];
+  const userOnboardDrv = gameState.drivers.find(d => d.code === userViewConfig.onboardCode) || gameState.drivers[0];
+
+  // Admin 12-Car All-Onboard Grid Mode
+  if (isAdmin && userViewConfig.adminGrid12 && gameState.drivers.length === 12) {
+    pipFrame.style.display = 'none';
+    const cols = 4, rows = 3;
+    const cellW = Math.floor(W / cols);
+    const cellH = Math.floor(H / rows);
+    gameState.drivers.forEach((drv, idx) => {
+      const c = idx % cols;
+      const r = Math.floor(idx / cols);
+      const x = c * cellW;
+      const y = H - (r + 1) * cellH;
+      renderer.setViewport(x, y, cellW - 2, cellH - 2);
+      renderer.setScissor(x, y, cellW - 2, cellH - 2);
+      pipCamera.aspect = cellW / cellH;
+      pipCamera.updateProjectionMatrix();
+      positionCameraForDriver(pipCamera, drv, 'onboard');
+      renderer.render(scene, pipCamera);
+    });
+    return;
+  }
+
+  if (userViewConfig.layout === 'world') {
+    pipFrame.style.display = 'none';
+    renderer.setViewport(0, 0, W, H);
+    renderer.setScissor(0, 0, W, H);
+    worldCamera.aspect = W / H;
+    worldCamera.updateProjectionMatrix();
+    positionCameraForDriver(worldCamera, worldTargetDrv, gameState.broadcast.cameraMode);
+    renderer.render(scene, worldCamera);
+  } else if (userViewConfig.layout === 'onboard') {
+    pipFrame.style.display = 'none';
+    renderer.setViewport(0, 0, W, H);
+    renderer.setScissor(0, 0, W, H);
+    pipCamera.aspect = W / H;
+    pipCamera.updateProjectionMatrix();
+    positionCameraForDriver(pipCamera, userOnboardDrv, 'onboard');
+    renderer.render(scene, pipCamera);
+  } else {
+    // Dual View: Fullscreen World Feed + Bottom-Right Onboard PiP
+    renderer.setViewport(0, 0, W, H);
+    renderer.setScissor(0, 0, W, H);
+    worldCamera.aspect = W / H;
+    worldCamera.updateProjectionMatrix();
+    positionCameraForDriver(worldCamera, worldTargetDrv, gameState.broadcast.cameraMode);
+    renderer.render(scene, worldCamera);
+
+    // Sub Viewport (PiP Onboard)
+    const pipW = Math.floor(W * 0.36);
+    const pipH = Math.floor(H * 0.38);
+    const pipX = W - pipW - 20;
+    const pipY = 78;
+    pipFrame.style.display = 'block';
+    document.getElementById('pip-driver-label').textContent = `${userOnboardDrv?.num || ''} ${userOnboardDrv?.name || ''}`;
+
+    renderer.setViewport(pipX, pipY, pipW, pipH);
+    renderer.setScissor(pipX, pipY, pipW, pipH);
+    pipCamera.aspect = pipW / pipH;
+    pipCamera.updateProjectionMatrix();
+    positionCameraForDriver(pipCamera, userOnboardDrv, 'onboard');
+    renderer.render(scene, pipCamera);
+  }
+}
+
+/* ============================================================================
+   9. 2D GPS MAP & UI TIMING TOWER UPDATES
+============================================================================ */
+const gpsCanvas = document.getElementById('gps-canvas');
+const gpsCtx = gpsCanvas.getContext('2d');
+
+function drawGpsMap() {
+  const gpsWidget = document.getElementById('gps-widget');
+  gpsWidget.style.display = (gameState.broadcast.showGps || isAdmin) ? 'flex' : 'none';
+
+  gpsCtx.clearRect(0, 0, gpsCanvas.width, gpsCanvas.height);
+  const scale = 0.145;
+  const cx = gpsCanvas.width / 2;
+  const cy = gpsCanvas.height / 2;
+
+  // Track Outline
+  gpsCtx.beginPath();
+  for (let i = 0; i <= 120; i++) {
+    const pt = mainCurve.getPointAt(i / 120);
+    const x = cx + pt.x * scale;
+    const y = cy + pt.z * scale;
+    if (i === 0) gpsCtx.moveTo(x, y);
+    else gpsCtx.lineTo(x, y);
+  }
+  gpsCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+  gpsCtx.lineWidth = 3.5;
+  gpsCtx.stroke();
+
+  // Driver Dots
+  gameState.drivers.forEach(drv => {
+    const pt = mainCurve.getPointAt(drv.t % 1);
+    const x = cx + pt.x * scale;
+    const y = cy + pt.z * scale;
+    gpsCtx.beginPath();
+    gpsCtx.arc(x, y, drv.code === gameState.broadcast.targetCode ? 5 : 3.5, 0, Math.PI * 2);
+    gpsCtx.fillStyle = drv.color;
+    gpsCtx.fill();
+    if (drv.code === gameState.broadcast.targetCode) {
+      gpsCtx.strokeStyle = '#ffffff';
+      gpsCtx.lineWidth = 1.5;
+      gpsCtx.stroke();
+    }
+  });
+}
+
+function updateUI() {
+  // Session Label & Timer
+  const phaseNames = {
+    FREE_PRACTICE: 'FREE PRACTICE',
+    QUALIFYING: 'QUALIFYING',
+    BETTING: 'GRID & BETTING OPEN',
+    FORMATION_LAP: 'FORMATION LAP',
+    FIVE_LIGHTS: 'STARTING GRID',
+    RACE: 'GRAND PRIX RACE',
+    FINISHED: 'CHECKERED FLAG'
+  };
+  document.getElementById('session-name-label').textContent = phaseNames[gameState.phase] || gameState.phase;
+
+  if (gameState.phase === 'QUALIFYING') {
+    const m = Math.floor(gameState.timer / 60);
+    const s = Math.floor(gameState.timer % 60);
+    document.getElementById('session-timer-label').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  } else if (gameState.phase === 'RACE') {
+    document.getElementById('session-timer-label').textContent = `LAP ${gameState.raceLap}/${TOTAL_RACE_LAPS}`;
+  } else {
+    document.getElementById('session-timer-label').textContent = 'LIVE';
+  }
+
+  // Timing Tower Visibility
+  const towerEl = document.getElementById('timing-tower');
+  if (!gameState.broadcast.showTower && !isAdmin) {
+    towerEl.classList.add('hidden-tower');
+  } else {
+    towerEl.classList.remove('hidden-tower');
+  }
+  document.getElementById('tower-lap-counter').textContent =
+    gameState.phase === 'QUALIFYING' ? 'BEST TIME' : `LAP ${gameState.raceLap}/${TOTAL_RACE_LAPS}`;
+
+  // Timing Tower Rows
+  const rowsContainer = document.getElementById('tower-rows');
+  rowsContainer.innerHTML = gameState.drivers.map(drv => {
+    let timeStr = '';
+    if (gameState.broadcast.showTimes || isAdmin) {
+      if (gameState.phase === 'QUALIFYING') {
+        timeStr = drv.bestLapTime ? `${drv.bestLapTime.toFixed(3)}s` : 'OUT LAP';
+      } else {
+        timeStr = drv.pos === 1 ? 'LEADER' : `+${drv.gapToLeader.toFixed(1)}s`;
+      }
+    }
+    const tyreHtml = (gameState.broadcast.showTyres || isAdmin)
+      ? `<span class="tyre-icon tyre-${drv.tyre}">${drv.tyre}</span>`
+      : '';
+    const pitHtml = drv.inPit ? `<span class="pit-tag">PIT</span>` : '';
+    const isFocused = drv.code === gameState.broadcast.targetCode;
+
+    return `
+      <div class="tower-row ${isFocused ? 'focused' : ''}" onclick="onSelectTowerDriver('${drv.code}')">
+        <span class="pos-num">${drv.pos}</span>
+        <span class="team-stripe" style="background:${drv.color}"></span>
+        <span class="drv-code">${drv.code}</span>
+        <span class="mom-badge ${drv.momActive ? 'active' : ''}">MOM</span>
+        <span class="drv-gap">${timeStr}</span>
+        ${pitHtml}
+        ${tyreHtml}
+      </div>
+    `;
+  }).join('');
+
+  // Telemetry HUD for Focused Car
+  const hudDrv = (userViewConfig.layout === 'onboard')
+    ? gameState.drivers.find(d => d.code === userViewConfig.onboardCode)
+    : gameState.drivers.find(d => d.code === gameState.broadcast.targetCode);
+  if (hudDrv) {
+    document.getElementById('hud-drv-name').textContent = `${hudDrv.num} ${hudDrv.name}`;
+    document.getElementById('hud-drv-team').textContent = hudDrv.team;
+    document.getElementById('hud-speed').textContent = Math.round(hudDrv.speed);
+    const gear = hudDrv.speed < 5 ? 'N' : Math.min(8, Math.max(1, Math.floor(hudDrv.speed / 42) + 1));
+    document.getElementById('hud-gear').textContent = `G${gear}`;
+    document.getElementById('hud-ers-bar').style.width = `${hudDrv.ers}%`;
+    document.getElementById('hud-tyre-bar').style.width = `${hudDrv.tyreLife}%`;
+    const momEl = document.getElementById('hud-mom-status');
+    if (hudDrv.momActive) {
+      momEl.textContent = '⚡ OVERTAKE MODE: ACTIVE';
+      momEl.style.background = 'var(--f1-purple)';
+      momEl.style.color = '#fff';
+    } else {
+      momEl.textContent = 'OVERTAKE MODE: OFF';
+      momEl.style.background = '#222';
+      momEl.style.color = '#888';
+    }
+  }
+}
+
+window.onSelectTowerDriver = function(code) {
+  if (isAdmin) {
+    gameState.broadcast.targetCode = code;
+    document.getElementById('admin-world-target').value = code;
+  } else {
+    userViewConfig.onboardCode = code;
+    document.getElementById('user-onboard-select').value = code;
+  }
+};
+
+function populateDriverSelectors() {
+  const adminSel = document.getElementById('admin-world-target');
+  const userSel = document.getElementById('user-onboard-select');
+  const html = gameState.drivers.map(d => `<option value="${d.code}">#${d.num} ${d.name} (${d.team})</option>`).join('');
+  adminSel.innerHTML = html;
+  userSel.innerHTML = html;
+}
+
+/* ============================================================================
+   10. QUALIFYING -> ODDS CALCULATION -> BETTING -> 5 LIGHTS -> PAYOUT
+============================================================================ */
+function finishQualifyingAndOpenBetting() {
+  gameState.phase = 'BETTING';
+  gameState.betsReceived = {};
+
+  // Lock Starting Grid by Qualifying Best Lap Time & Generate Grid-Based Odds
+  gameState.drivers.sort((a, b) => (a.bestLapTime || 999) - (b.bestLapTime || 999));
+  gameState.gridOdds = {};
+
+  gameState.drivers.forEach((drv, idx) => {
+    const gridPos = idx + 1;
+    drv.gridPos = gridPos;
+    drv.pos = gridPos;
+    // Place on starting grid slots
+    drv.t = (START_LINE_T - gridPos * 0.0068 + 1) % 1;
+    drv.laneOffset = (gridPos % 2 === 1) ? -3.2 : 3.2;
+    drv.speed = 0;
+
+    // Pole Position (P1) has lowest odds, P12 (last) has highest odds
+    // 1st place payout is highest, 2nd & 3rd also reward hits
+    const winOdd = +(1.8 + Math.pow(idx, 1.55) * 0.65).toFixed(1);
+    const p2Odd  = +(1.3 + Math.pow(idx, 1.45) * 0.32).toFixed(1);
+    const p3Odd  = +(1.1 + Math.pow(idx, 1.35) * 0.18).toFixed(1);
+    gameState.gridOdds[drv.code] = { win: winOdd, p2: p2Odd, p3: p3Odd };
+  });
+
+  openBettingModalUI();
+  if (isAdmin) broadcastEvent({ type: 'OPEN_BETTING', gridOdds: gameState.gridOdds });
+}
+
+function openBettingModalUI() {
+  playerProfile.betConfirmed = false;
+  document.getElementById('btn-open-bet-modal').style.display = 'inline-block';
+  const modal = document.getElementById('betting-modal');
+  modal.style.display = 'flex';
+
+  const gridEl = document.getElementById('bet-driver-grid');
+  const sortedByGrid = [...gameState.drivers].sort((a, b) => a.gridPos - b.gridPos);
+  if (!playerProfile.betDriverCode && sortedByGrid[0]) {
+    playerProfile.betDriverCode = sortedByGrid[0].code;
+  }
+
+  gridEl.innerHTML = sortedByGrid.map(drv => {
+    const odds = gameState.gridOdds[drv.code] || { win: 2.0, p2: 1.4, p3: 1.1 };
+    const sel = playerProfile.betDriverCode === drv.code ? 'selected' : '';
+    return `
+      <div class="bet-driver-card ${sel}" data-code="${drv.code}" onclick="selectBetDriver('${drv.code}')">
+        <div style="display:flex; justify-content:space-between; font-weight:900;">
+          <span>P${drv.gridPos} #${drv.num} ${drv.code}</span>
+          <span style="color:${drv.color};">${drv.team}</span>
+        </div>
+        <div style="font-size:13px; margin-top:2px;">${drv.name}</div>
+        <div class="odds-badges">
+          <span class="odd-pill">1位: x${odds.win}</span>
+          <span class="odd-pill">2位: x${odds.p2}</span>
+          <span class="odd-pill">3位: x${odds.p3}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.selectBetDriver = function(code) {
+  playerProfile.betDriverCode = code;
+  document.querySelectorAll('.bet-driver-card').forEach(el => {
+    el.classList.toggle('selected', el.dataset.code === code);
+  });
+};
+
+function startFormationLap() {
+  document.getElementById('betting-modal').style.display = 'none';
+  document.getElementById('btn-open-bet-modal').style.display = 'none';
+  gameState.phase = 'FORMATION_LAP';
+  gameState.drivers.forEach(drv => {
+    drv.totalDist = 0;
+  });
+  document.getElementById('btn-five-lights').disabled = false;
+  if (isAdmin) broadcastEvent({ type: 'START_FORMATION' });
+}
+
+function triggerFiveLightsStart() {
+  gameState.phase = 'FIVE_LIGHTS';
+  document.getElementById('btn-five-lights').disabled = true;
+
+  // Align all cars cleanly on starting grid
+  gameState.drivers.forEach(drv => {
+    drv.t = (START_LINE_T - drv.gridPos * 0.0068 + 1) % 1;
+    drv.laneOffset = (drv.gridPos % 2 === 1) ? -3.2 : 3.2;
+    drv.speed = 0;
+    drv.lap = 1;
+    drv.totalDist = drv.t;
+    drv.currentLapStart = performance.now();
+    drv.finished = false;
+  });
+
+  runFiveLightsAnimation();
+  if (isAdmin) broadcastEvent({ type: 'FIVE_LIGHTS_SEQ' });
+}
+
+function runFiveLightsAnimation() {
+  const panel = document.getElementById('start-lights-panel');
+  const lights = panel.querySelectorAll('.l-ind');
+  lights.forEach(l => l.classList.remove('on'));
+  panel.style.display = 'flex';
+
+  let count = 0;
+  const interval = setInterval(() => {
+    if (count < 5) {
+      lights[count].classList.add('on');
+      count++;
+    } else {
+      clearInterval(interval);
+      // Random blackout delay (0.8s - 2.2s) like real F1!
+      setTimeout(() => {
+        lights.forEach(l => l.classList.remove('on'));
+        if (isAdmin) startRaceSession();
+        setTimeout(() => { panel.style.display = 'none'; }, 1200);
+      }, 900 + Math.random() * 1100);
+    }
+  }, 950);
+}
+
+function startRaceSession() {
+  gameState.phase = 'RACE';
+  gameState.raceLap = 1;
+  gameState.drivers.forEach(d => { d.currentLapStart = performance.now(); });
+  if (isAdmin) broadcastEvent({ type: 'RACE_GO' });
+}
+
+function checkRaceCompletion() {
+  // Finish when top 3 have crossed the line
+  const finishedCount = gameState.drivers.filter(d => d.finished).length;
+  if (finishedCount >= 3 && gameState.phase === 'RACE') {
+    gameState.phase = 'FINISHED';
+    const top3 = gameState.drivers.slice(0, 3).map(d => ({
+      code: d.code, name: d.name, num: d.num, team: d.team, color: d.color
+    }));
+    showRaceResultAndSettleBet(top3);
+    if (isAdmin) broadcastEvent({ type: 'RACE_FINISHED', top3 });
+  }
+}
+
+function showRaceResultAndSettleBet(top3) {
+  const modal = document.getElementById('result-modal');
+  const podBox = document.getElementById('result-podium-box');
+  const payBox = document.getElementById('result-payout-box');
+
+  const medals = ['🥇 1st PLACE', '🥈 2nd PLACE', '🥉 3rd PLACE'];
+  podBox.innerHTML = top3.map((d, i) => `
+    <div style="background:#222232; border-left:5px solid ${d.color}; padding:10px 14px; border-radius:4px; display:flex; justify-content:space-between;">
+      <strong>${medals[i]}</strong>
+      <span>#${d.num} ${d.name} (${d.team})</span>
+    </div>
+  `).join('');
+
+  if (playerProfile.betConfirmed && playerProfile.betDriverCode && playerProfile.betAmount > 0) {
+    const betCode = playerProfile.betDriverCode;
+    const odds = gameState.gridOdds[betCode] || { win: 2.0, p2: 1.4, p3: 1.1 };
+    let multiplier = 0;
+    let rankHit = 0;
+    if (top3[0]?.code === betCode) { multiplier = odds.win; rankHit = 1; }
+    else if (top3[1]?.code === betCode) { multiplier = odds.p2; rankHit = 2; }
+    else if (top3[2]?.code === betCode) { multiplier = odds.p3; rankHit = 3; }
+
+    if (rankHit > 0) {
+      const reward = Math.round(playerProfile.betAmount * multiplier);
+      playerProfile.money += reward;
+      saveProfile();
+      payBox.innerHTML = `
+        <div style="color:var(--f1-green); font-weight:900; font-size:17px;">🎉 的中！ (${rankHit}位入賞 - 倍率 x${multiplier})</div>
+        <div style="margin-top:6px;">賭け金: ¥${playerProfile.betAmount.toLocaleString()} ➔ <strong>払戻金: ¥${reward.toLocaleString()}</strong></div>
+      `;
+    } else {
+      payBox.innerHTML = `
+        <div style="color:#ff5555; font-weight:900;">残念、予想した選手 (${betCode}) は3位以内に入りませんでした。</div>
+        <div style="margin-top:4px;">次回レースで巻き返しましょう！ (現在所持金: ¥${playerProfile.money.toLocaleString()})</div>
+      `;
+    }
+    playerProfile.betConfirmed = false;
+  } else {
+    payBox.innerHTML = `<div>今回のレースではベットが行われませんでした。</div>`;
+  }
+
+  modal.style.display = 'flex';
+}
+
+/* ============================================================================
+   11. P2P NETWORKING (PeerJS WebRTC + BroadcastChannel Local Tab Fallback)
+============================================================================ */
+let peer = null;
+let peerConnections = [];
+let hostConn = null;
+const localChannel = new BroadcastChannel('f1_p2p_fallback_2026');
+
+function initNetworking() {
+  if (isAdmin) {
+    document.getElementById('admin-dock').style.display = 'flex';
+    document.getElementById('weather-widget').style.display = 'block';
+  } else if (roomParam) {
+    connectToHostPeer(roomParam);
+  }
+
+  localChannel.onmessage = (ev) => {
+    handleNetworkPacket(ev.data);
+  };
+}
+
+function createHostGame() {
+  const chosen12 = selectRandom12Drivers();
+  initDriversList(chosen12);
+  gameState.phase = 'FREE_PRACTICE';
+
+  const shareBase = window.location.origin + window.location.pathname.replace(/\/admin$/, '');
+  const fallbackRoomId = 'f1gp_' + Math.random().toString(36).substring(2, 8);
+  document.getElementById('share-url-display').textContent = `${shareBase}?room=${fallbackRoomId}`;
+
+  if (peer) peer.destroy();
+  peer = new Peer(fallbackRoomId);
+  peer.on('open', (id) => {
+    const inviteUrl = `${shareBase}?room=${id}`;
+    document.getElementById('share-url-display').textContent = inviteUrl;
+  });
+  peer.on('connection', (conn) => {
+    peerConnections.push(conn);
+    document.getElementById('peer-conn-count').textContent = `参加者: ${peerConnections.length}人`;
+    conn.on('data', (data) => handleNetworkPacket(data));
+    conn.on('close', () => {
+      peerConnections = peerConnections.filter(c => c !== conn);
+      document.getElementById('peer-conn-count').textContent = `参加者: ${peerConnections.length}人`;
+    });
+  });
+}
+
+function connectToHostPeer(roomId) {
+  peer = new Peer();
+  peer.on('open', () => {
+    hostConn = peer.connect(roomId);
+    hostConn.on('data', (data) => handleNetworkPacket(data));
+  });
+}
+
+function broadcastEvent(packet) {
+  localChannel.postMessage(packet);
+  peerConnections.forEach(c => { if (c.open) c.send(packet); });
+}
+
+function sendToHost(packet) {
+  localChannel.postMessage(packet);
+  if (hostConn && hostConn.open) hostConn.send(packet);
+}
+
+function handleNetworkPacket(pkt) {
+  if (!pkt || !pkt.type) return;
+
+  if (pkt.type === 'STATE_SYNC' && !isAdmin) {
+    if (gameState.drivers.length === 0 && pkt.state.drivers.length > 0) {
+      initDriversList(pkt.state.drivers);
+    }
+    gameState.phase = pkt.state.phase;
+    gameState.timer = pkt.state.timer;
+    gameState.raceLap = pkt.state.raceLap;
+    gameState.broadcast = pkt.state.broadcast;
+    gameState.gridOdds = pkt.state.gridOdds || gameState.gridOdds;
+
+    pkt.state.drivers.forEach(sd => {
+      const localD = gameState.drivers.find(d => d.code === sd.code);
+      if (localD) {
+        Object.assign(localD, sd);
+      }
+    });
+  } else if (pkt.type === 'PIT_POPUP' && !isAdmin) {
+    updateTyreVisual(pkt.code, pkt.tyre);
+    showPitPopup(pkt.name, pkt.duration);
+  } else if (pkt.type === 'OPEN_BETTING' && !isAdmin) {
+    gameState.gridOdds = pkt.gridOdds;
+    openBettingModalUI();
+  } else if (pkt.type === 'START_FORMATION' && !isAdmin) {
+    document.getElementById('betting-modal').style.display = 'none';
+    document.getElementById('btn-open-bet-modal').style.display = 'none';
+  } else if (pkt.type === 'FIVE_LIGHTS_SEQ' && !isAdmin) {
+    runFiveLightsAnimation();
+  } else if (pkt.type === 'RACE_FINISHED' && !isAdmin) {
+    showRaceResultAndSettleBet(pkt.top3);
+  } else if (pkt.type === 'PLAYER_BET' && isAdmin) {
+    gameState.betsReceived[pkt.playerId] = pkt;
+    const totalBets = Object.keys(gameState.betsReceived).length;
+    document.getElementById('bet-status-pill').textContent = `ベット完了: ${totalBets}名`;
+    // Auto advance if all connected peers have bet
+    if (peerConnections.length > 0 && totalBets >= peerConnections.length) {
+      startFormationLap();
+    }
+  }
+}
+
+// Host State Sync Loop (20Hz)
+setInterval(() => {
+  if (isAdmin && gameState.drivers.length > 0) {
+    broadcastEvent({
+      type: 'STATE_SYNC',
+      state: {
+        phase: gameState.phase,
+        timer: gameState.timer,
+        raceLap: gameState.raceLap,
+        broadcast: gameState.broadcast,
+        gridOdds: gameState.gridOdds,
+        drivers: gameState.drivers
+      }
+    });
+  }
+}, 50);
+
+/* ============================================================================
+   12. UI EVENT LISTENERS & INITIALIZATION
+============================================================================ */
+// Name Setup
+if (!playerProfile.name) {
+  document.getElementById('name-modal').style.display = 'flex';
+}
+saveProfile();
+
+document.getElementById('btn-save-name').addEventListener('click', () => {
+  const val = document.getElementById('player-name-input').value.trim() || 'Racer';
+  playerProfile.name = val;
+  saveProfile();
+  document.getElementById('name-modal').style.display = 'none';
+});
+
+// Toggle /admin Role Button for testing convenience
+document.getElementById('toggle-role-btn').addEventListener('click', () => {
+  isAdmin = !isAdmin;
+  try {
+    history.pushState({}, '', isAdmin ? '/admin' : '/');
+  } catch (e) {
+    window.location.hash = isAdmin ? '#admin' : '';
+  }
+  document.getElementById('admin-dock').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('weather-widget').style.display = isAdmin ? 'block' : 'none';
+});
+
+// Admin Controls
+document.getElementById('btn-create-game').addEventListener('click', () => {
+  createHostGame();
+});
+
+document.getElementById('btn-start-quali').addEventListener('click', () => {
+  const dur = parseInt(document.getElementById('quali-duration-input').value || '45', 10);
+  gameState.phase = 'QUALIFYING';
+  gameState.timer = dur;
+  gameState.drivers.forEach((d, idx) => {
+    d.bestLapTime = null;
+    d.currentLapStart = performance.now();
+    d.inPit = false;
+    d.t = (idx / 12) % 1;
+  });
+});
+
+document.getElementById('btn-end-quali').addEventListener('click', () => {
+  gameState.drivers.forEach(d => {
+    if (!d.bestLapTime) d.bestLapTime = 77.5 + (1 - d.skill) * 18 + Math.random() * 1.1;
+  });
+  finishQualifyingAndOpenBetting();
+});
+
+document.getElementById('btn-close-betting').addEventListener('click', () => {
+  startFormationLap();
+});
+
+document.getElementById('btn-five-lights').addEventListener('click', () => {
+  triggerFiveLightsStart();
+});
+
+document.getElementById('admin-world-target').addEventListener('change', (e) => {
+  gameState.broadcast.targetCode = e.target.value;
+});
+
+document.querySelectorAll('.cam-mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cam-mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    gameState.broadcast.cameraMode = btn.dataset.cam;
+  });
+});
+
+document.getElementById('btn-toggle-tower').addEventListener('click', (e) => {
+  gameState.broadcast.showTower = !gameState.broadcast.showTower;
+  e.target.classList.toggle('active', gameState.broadcast.showTower);
+});
+document.getElementById('btn-toggle-times').addEventListener('click', (e) => {
+  gameState.broadcast.showTimes = !gameState.broadcast.showTimes;
+  e.target.classList.toggle('active', gameState.broadcast.showTimes);
+});
+document.getElementById('btn-toggle-tyres').addEventListener('click', (e) => {
+  gameState.broadcast.showTyres = !gameState.broadcast.showTyres;
+  e.target.classList.toggle('active', gameState.broadcast.showTyres);
+});
+document.getElementById('btn-toggle-gps').addEventListener('click', (e) => {
+  gameState.broadcast.showGps = !gameState.broadcast.showGps;
+  e.target.classList.toggle('active', gameState.broadcast.showGps);
+});
+
+document.getElementById('btn-admin-all-onboard').addEventListener('click', (e) => {
+  userViewConfig.adminGrid12 = !userViewConfig.adminGrid12;
+  e.target.classList.toggle('active', userViewConfig.adminGrid12);
+  e.target.textContent = `全12台オンボード グリッド表示: ${userViewConfig.adminGrid12 ? 'ON' : 'OFF'}`;
+});
+
+// Participant F1TV Controls
+document.querySelectorAll('.view-layout-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-layout-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    userViewConfig.layout = btn.dataset.layout;
+  });
+});
+
+document.getElementById('user-onboard-select').addEventListener('change', (e) => {
+  userViewConfig.onboardCode = e.target.value;
+});
+
+// Betting Controls
+document.getElementById('btn-open-bet-modal').addEventListener('click', () => {
+  document.getElementById('betting-modal').style.display = 'flex';
+});
+
+document.querySelectorAll('.quick-bet-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById('bet-amount-input');
+    if (btn.dataset.amt === 'all') {
+      inp.value = playerProfile.money;
+    } else {
+      inp.value = Math.min(playerProfile.money, parseInt(inp.value || '0', 10) + parseInt(btn.dataset.amt, 10));
+    }
+  });
+});
+
+document.getElementById('btn-submit-bet').addEventListener('click', () => {
+  const amt = Math.min(playerProfile.money, Math.max(100, parseInt(document.getElementById('bet-amount-input').value || '0', 10)));
+  if (amt <= 0 || !playerProfile.betDriverCode) return;
+
+  playerProfile.betAmount = amt;
+  playerProfile.money -= amt;
+  playerProfile.betConfirmed = true;
+  saveProfile();
+
+  document.getElementById('betting-modal').style.display = 'none';
+  document.getElementById('bet-status-pill').textContent = `ベット済: ${playerProfile.betDriverCode} (¥${amt.toLocaleString()})`;
+
+  sendToHost({
+    type: 'PLAYER_BET',
+    playerId: playerProfile.id,
+    name: playerProfile.name,
+    driverCode: playerProfile.betDriverCode,
+    amount: amt
+  });
+});
+
+document.getElementById('btn-close-result').addEventListener('click', () => {
+  document.getElementById('result-modal').style.display = 'none';
+});
+
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ============================================================================
+   13. BOOTSTRAP & MAIN ANIMATION LOOP
+============================================================================ */
+initDriversList(selectRandom12Drivers());
+initNetworking();
+if (isAdmin) createHostGame();
+
+let lastFrameTime = performance.now();
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+  lastFrameTime = now;
+
+  if (isAdmin || !roomParam) {
+    updateSimulation(dt);
+  }
+  syncCarMeshesTo3D();
+  renderScene();
+  drawGpsMap();
+  updateUI();
+}
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
